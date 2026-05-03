@@ -2,7 +2,7 @@
 
 This repository contains the R scripts and data-management workflow for a systematic review and meta-analysis on unguided self-help cognitive behavioural therapy (CBT) interventions for adolescents with depressive symptoms.
 
-The project is currently under active development. The analysis workflow is organised step by step so that data import, effect size calculation, main meta-analysis, subgroup analysis, sensitivity analysis, publication bias assessment, and acceptability analysis can be run in a reproducible order.
+The analysis workflow is organised step by step so that data import, effect size calculation, main meta-analysis, subgroup analysis, sensitivity analysis, publication bias assessment, and acceptability analysis can be run in a reproducible order.
 
 ## Project Aim
 
