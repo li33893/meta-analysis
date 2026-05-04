@@ -5,13 +5,14 @@
 #### 1. List all packages needed in this project ####
 
 required_packages <- c(
-  "dplyr",      # 主要用来
+  "dplyr",      # 主要用来管理列表
   "tidyverse",  # data cleaning: filter(), mutate(), select(), %>%
   "readxl",     # read Excel files: read_excel()
   "janitor",    # clean column names: clean_names()
   "metafor",    # meta-analysis: escalc(), rma(), forest()
   "meta",       # additional meta-analysis functions
-  "writexl"     # export Excel files if needed
+  "writexl",    # export Excel files if needed
+  "readr"       # csv
 )
 
 

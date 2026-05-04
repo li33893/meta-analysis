@@ -3,8 +3,8 @@
 # 2. Effect size calculation — 3.3.1 (SMD) + 3.4.1 small sample bias (Hedge's g)
 # 3. When data formats are not minimum raw data (pre-calculate; see in Pre-calculate_effects.R) — 3.5.1 (guide) + 17 “Helpful Tools” section (several effect size converters) + 4.2.1 metagen function (allows us to perform a meta-analysis of effect size data that had to be pre-calculated) + prepare two more columns as 3.5.1 guiding
 
-#### 02_compute_effect_sizes.R ####
-#### Purpose: compute Hedges' g and sampling variance for each outcome row ####
+#### 01_read_data.R ####
+#### Purpose: reading the excel data with R ####
 
 
 #### 1. Load setup ####
