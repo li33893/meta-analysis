@@ -1,158 +1,122 @@
-# Related chapters in Doing Meta with R:
-# 1. Basic statistical knowledge — 3.1
-# 2. Effect size calculation — 3.3.1 (SMD) + 3.4.1 small sample bias (Hedge's g)
-# 3. When data formats are not minimum raw data (pre-calculate; see in Pre-calculate_effects.R) — 3.5.1 (guide) + 17 “Helpful Tools” section (several effect size converters) + 4.2.1 metagen function (allows us to perform a meta-analysis of effect size data that had to be pre-calculated) + prepare two more columns as 3.5.1 guiding
-
 #### 02_compute_effect_sizes.R ####
-#### Purpose: compute Hedges' g and sampling variance for each outcome row ####
+#### Purpose: compute Hedges' g for each outcome row ####
+
+# Three data types are handled separately based on m_type:
+#   "raw"          → escalc(SMD) on post-test means
+#   "change score" → escalc(SMD) on change scores (SD derived from change CI)
+#   "d"            → use reported between-group d directly (SE from CI)
+#
+# All depression measures: lower score = better.
+# Raw computation gives exp − ctrl, so we flip sign at the end:
+# positive g_final = intervention favoured.
 
 
-#### 1. Load cleaned data ####
+#### 1. Load data ####
 
 source("C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/scripts/01_read_data.R")
 
 
-#### 2. Check required columns ####
+#### 2. Type A — raw post-test means ####
+# escalc() is a function from the metafor package for computing effect sizes.
+# You supply means, standard deviations, and sample sizes.
+# It returns your original data frame with two new columns added:
+#   yi — the effect size (Hedges' g, raw value)
+#   vi — the sampling variance of yi (used later in the meta-analysis)
 
-required_cols <- c(
-  "study_id",
-  "author",
-  "timepoint",
-  "timing_mo",
-  "n_exp",
-  "n_ctrl",
-  "m_exp",
-  "sd_exp",
-  "m_ctrl",
-  "sd_ctrl",
-  "measure"
-)
+# as_tibble() converts the data frame to a tibble.
+# A tibble is a modern version of a data frame — same thing,
+# just prints more neatly in the console (shows only the first 10 rows).
+# No effect on the actual data or calculations.
 
-missing_cols <- setdiff(required_cols, names(outcome_data))  # setdiff(A, B) 的意思是：A 里面有，但 B 里面没有的东西
+dataA <- outcome_data %>% dplyr::filter(m_type == "raw")
 
-if (length(missing_cols) > 0) {
-  stop(
-    "These required columns are missing from Outcome_Data: ",
-    paste(missing_cols, collapse = ", ")
-  )
-}
-
-
-#### 3. Keep rows with enough raw data for effect size calculation ####
-
-effect_input <- outcome_data %>%
-  dplyr::filter(
-    !is.na(n_exp),
-    !is.na(n_ctrl),
-    !is.na(m_exp),
-    !is.na(sd_exp),
-    !is.na(m_ctrl),
-    !is.na(sd_ctrl)
-  )
-
-
-
-#### 4. Compute standardized mean difference using metafor ####
-
-effect_data_raw <- metafor::escalc(
+esA <- metafor::escalc(
   measure = "SMD",
-  m1i = m_exp,
-  sd1i = sd_exp,
-  n1i = n_exp,
-  m2i = m_ctrl,
-  sd2i = sd_ctrl,
-  n2i = n_ctrl,
-  data = effect_input
-)
+  m1i = m_exp,  sd1i = sd_exp,  n1i = n_exp,
+  m2i = m_ctrl, sd2i = sd_ctrl, n2i = n_ctrl,
+  data = dataA
+) %>%
+  tibble::as_tibble() %>%
+  dplyr::mutate(method = "escalc_SMD") # # Add a new column called "method", filling every row with the string "escalc_SMD".
 
+#### 3. Type B — change scores (derive change SD from CI) ####
+# SD = (CI_upper − CI_lower) × √n / (2 × 1.96)
 
-#### 5. Make direction easier to interpret ####
-#### Depression scores: lower = better.
-#### metafor calculates m1 - m2.
-#### If intervention has lower depression than control, raw yi is negative.
-#### We multiply by -1 so positive yi means "favours intervention". ####
-
-effect_data <- effect_data_raw %>%
+dataB <- outcome_data %>%
+  dplyr::filter(m_type == "change score") %>%
   dplyr::mutate(
-    # 1. Save the original results from escalc()
+    sd_change_exp  = (ci_upper_exp  - ci_lower_exp ) * sqrt(n_exp ) / 3.92,
+    sd_change_ctrl = (ci_upper_ctrl - ci_lower_ctrl) * sqrt(n_ctrl) / 3.92
+  )
+
+esB <- metafor::escalc(
+  measure = "SMD",
+  m1i = change_mean_exp,  sd1i = sd_change_exp,  n1i = n_exp,
+  m2i = change_mean_ctrl, sd2i = sd_change_ctrl, n2i = n_ctrl,
+  data = dataB
+) %>%
+  tibble::as_tibble() %>%
+  dplyr::mutate(method = "escalc_SMD_change")
+
+
+#### 4. Type C — reported between-group d with CI ####
+# SE = (CI_upper − CI_lower) / (2 × 1.96)
+
+esC <- outcome_data %>%
+  dplyr::filter(m_type == "d") %>%
+  dplyr::mutate(
+    yi     = reported_d_between,
+    vi     = ((ci_upper_between - ci_lower_between) / 3.92) ^ 2,
+    method = "reported_d"
+  )
+
+
+#### 5. Combine and flip sign ####
+
+effect_data <- dplyr::bind_rows(esA, esB, esC) %>%
+  dplyr::mutate(
     hedges_g_original = yi,
     variance_original = vi,
-    se_original = sqrt(variance_original),
+    se_original       = sqrt(vi),
     
-    # 2. Reverse the direction so that positive values mean intervention is better
-    hedges_g_final = -hedges_g_original,
-    variance_final = variance_original,
-    se_final = sqrt(variance_final),
+    # Flip so positive = intervention favored (variance unchanged)
+    hedges_g_final = -yi,
+    variance_final = vi,
+    se_final       = sqrt(vi),
     
-    # 3. Keep standard names for later meta-analysis functions
-    yi = hedges_g_final,
-    vi = variance_final,
-    te = hedges_g_final,
+    yi    = hedges_g_final,
+    vi    = variance_final,
+    te    = hedges_g_final,
     se_te = se_final,
     
-    # 4. Record how to interpret the direction
     effect_direction = "positive values favor intervention"
   )
 
 
-#### 6. Inspect computed effect sizes ####
+#### 6. Quick look ####
 
 effect_data %>%
-  dplyr::select(
-    study_id,
-    author,
-    timepoint,
-    timing_mo,
-    measure,
-    n_exp,
-    n_ctrl,
-    m_exp,
-    sd_exp,
-    m_ctrl,
-    sd_ctrl,
-    hedges_g_original,
-    variance_final,
-    yi,
-    vi,
-    se_te,
-    effect_direction
-  ) %>%
-  print(n = Inf)  # 把所有行都打印出来
+  dplyr::select(study_id, author, timepoint, measure, method,
+                hedges_g_final, se_final) %>%
+  dplyr::mutate(dplyr::across(c(hedges_g_final, se_final), ~ round(., 3))) %>%
+  print(n = Inf)
 
 
-#### 7. Export effect-size dataset ####
+#### 7. Export ####
 
-# 7.1 Create output folders if they do not exist
+# Set the path to the results folder
+results_dir <- "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/results"
 
-dir.create(
-  "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/results/models",
-  recursive = TRUE,
-  showWarnings = FALSE
-)
+# Create subfolders if they do not exist
+# recursive = TRUE: create parent folders if they do not exist
+# showWarnings = FALSE: suppress warning if the folder already exists
+dir.create(file.path(results_dir, "models"), recursive = TRUE, showWarnings = FALSE)
+dir.create(file.path(results_dir, "tables"), recursive = TRUE, showWarnings = FALSE)
 
-dir.create(
-  "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/results/tables",
-  recursive = TRUE,
-  showWarnings = FALSE
-)
+# Save R object for use in later scripts
+saveRDS(effect_data, file.path(results_dir, "models", "effect_data.rds"))
 
-
-# 7.2 Save R object for later analysis scripts
-
-saveRDS(
-  effect_data,
-  file = "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/results/models/effect_data.rds"
-)
-
-
-# 7.3 Optional: export a CSV version for manual checking
-
-readr::write_csv(
-  effect_data,
-  file = "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/results/tables/effect_data.csv"
-)
-
-
-#### 8. Finish ####
+# Export CSV for manual checking in Excel
+readr::write_csv(effect_data, file.path(results_dir, "tables", "effect_data.csv"))
 
 cat("02_compute_effect_sizes.R completed successfully.\n")

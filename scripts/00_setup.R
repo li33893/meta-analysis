@@ -1,51 +1,51 @@
-#### 00_setup.R ####
-#### Purpose: prepare packages for the meta-analysis project ####
+### 00_setup.R — A file to install and to load all the packages in need
+### To add a new package: append its name as an element to "required_packages"
 
 
-#### 1. List all packages needed in this project ####
-
+# 0. Packages to install or to load
 required_packages <- c(
-  "dplyr",      # 主要用来管理列表
-  "tidyverse",  # data cleaning: filter(), mutate(), select(), %>%
+  "dplyr",      # data manipulation: filter(), mutate(), select(), %>%
+  "tidyverse",  # core collection that includes ggplot2, tidyr, purrr, etc.
   "readxl",     # read Excel files: read_excel()
   "janitor",    # clean column names: clean_names()
   "metafor",    # meta-analysis: escalc(), rma(), forest()
-  "meta",       # additional meta-analysis functions
-  "writexl",    # export Excel files if needed
-  "readr"       # csv
+  "meta",       # meta-analysis: metagen() for pre-calculated effect sizes
+  "writexl",    # export Excel files: write_xlsx()
+  "readr",      # read and write CSV files: read_csv(), write_csv()
+  "tibble"      # modern way of data frame
 )
 
 
-#### 2. Define a helper function: install a package only if it is missing ####
-
-# Install the package if no package with the same name can be found.
-install_if_missing <- function(pkg) {
+# 1. Function — install a package only if it has not been installed yet
+install_if_hasnt <- function(pkg) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
+    # requireNamespace(): checks whether a package is already installed; returns TRUE/FALSE
+    # quietly = TRUE: suppresses the warning when the package is not found
     install.packages(pkg)
   }
 }
 
 
-#### 3. Apply this helper function to every package in required_packages ####
-
+# 2. Install missing packages
 invisible(
-  # lapply() returns a list of results, but we do not need to print them.
-  # We only want to run the package-checking function for each package.
-  lapply(required_packages, install_if_missing)
+  # invisible(): suppresses the list of NULLs that lapply() would otherwise print
+  lapply(required_packages, install_if_hasnt)
+  # lapply(vector, function): applies the function to every element in the vector
 )
 
 
-#### 4. Load all required packages ####
-
+# 3. Load all packages
 invisible(
-  lapply(required_packages, function(pkg) {
-    # character.only = TRUE means pkg is a string variable,
-    # such as "readxl", rather than a directly written package name.
-    library(pkg, character.only = TRUE)
-  })
+  lapply(
+    required_packages,
+    function(pkg) {
+      library(pkg, character.only = TRUE)
+      # library() only accepts package names as literals (e.g., library(readxl)) by default.
+      # Here pkg is a loop variable, not a literal, so character.only = TRUE is required
+      # to tell library() to read the string value stored in pkg as the package name.
+    }
+  )
 )
 
-
-#### 5. Print a completion message ####
 
 cat("00_setup.R completed successfully.\n")
