@@ -12,7 +12,8 @@ required_packages <- c(
   "meta",       # meta-analysis: metagen() for pre-calculated effect sizes
   "writexl",    # export Excel files: write_xlsx()
   "readr",      # read and write CSV files: read_csv(), write_csv()
-  "tibble"      # modern way of data frame
+  "tibble",     # modern way of data frame
+  "robvis"      # Risk of Bias plots
 )
 
 

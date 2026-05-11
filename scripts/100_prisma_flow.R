@@ -28,7 +28,7 @@ get_n <- function(pattern) {
   row <- prisma_flow[grepl(pattern, prisma_flow$stage, ignore.case = TRUE), ]
   if (nrow(row) == 0) stop("Pattern not found in PRISMA_Flow: ", pattern)
   as.integer(gsub("\\D.*$", "", as.character(row$n[1])))
-  # gsub("\\D.*$", "", x): strips trailing non-digit content, e.g. "16  (= 15 + 1)" -> "16"
+  # gsub("\\D.*$", "", x): strips trailing non-digit content, e.g. "15 (= 14 + 1)" -> "15"
 }
 
 n_total       <- get_n("^Total records identified$")
@@ -39,9 +39,9 @@ n_ta_excl     <- get_n("^Excluded at Title/Abstract$")
 n_ft_sought   <- get_n("^Full-text assessed$")    # same n is used for "sought" and "assessed"
 n_ft_assessed <- n_ft_sought
 n_ft_excl     <- get_n("^Excluded at Full-text$")
-n_incl        <- get_n("^Studies included in meta-analysis$")  # parses 16 from "16  (= 15 + 1)"
+n_incl        <- get_n("^Studies included in meta-analysis$")  # parses 15 from "15 (= 14 + 1)"
 n_cite_added  <- 1                                              # one study from backward citation searching
-n_incl_reports <- 20                                            # report-level count (kept here; not in sheet)
+n_incl_reports <- 19                                            # 19 reports of 15 studies after excluding Merry 2012 under E6
 
 
 #### 3. Parse E-code exclusion reasons from the same sheet ####
@@ -152,4 +152,4 @@ rsvg::rsvg_png(charToRaw(svg_code), file = file.path(fig_dir, "PRISMA_flow.png")
 
 cat("100_prisma_flow.R completed successfully.\n",
     "  ->", file.path(fig_dir, "PRISMA_flow.pdf"), "\n",
-    "  ->", file.path(fig_dir, "PRISMA_flow.png"), "\n
+    "  ->", file.path(fig_dir, "PRISMA_flow.png"), "\n")
