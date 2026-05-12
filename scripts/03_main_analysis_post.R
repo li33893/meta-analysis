@@ -21,7 +21,7 @@ model_post <- metagen(
   studlab          = author,
   data             = data_to_be_pooled,
   sm               = "SMD",
-  common           = FALSE,
+  common           = FALSE,           
   random           = TRUE,
   method.tau       = "REML",
   method.random.ci = "HK",
@@ -34,15 +34,35 @@ model_post <- metagen(
 summary(model_post)
 
 
-### 6. Save files ###
+### 5. Forest plot ###
+figures_dir <- "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/figures"
 
+png(file.path(figures_dir, "forest_post.png"),
+    width  = 3000,
+    height = 800 + 200 * nrow(data_to_be_pooled),
+    res    = 300)
+
+forest(model_post,
+       sortvar     = TE,
+       smlab       = "Hedges' g",
+       leftlabs    = c("Study", "g", "95% CI"),
+       label.left  = "Favours Control",
+       label.right = "Favours Intervention",
+       col.diamond = "steelblue",
+       print.tau2  = TRUE,
+       print.I2    = TRUE,
+       prediction  = TRUE,
+       xlim        = c(-2, 2),
+       main        = "Post-intervention")
+
+dev.off()
+cat("Post-intervention forest plot saved to figures/\n")
+
+### 6. Save files ###
 results_dir <- "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/results"
 
-# 保存模型对象（供 04 森林图脚本读取）
 saveRDS(model_post, file.path(results_dir, "models", "model_post.rds"))
-
-# 保存数据子集（供检查）
-readr::write_csv(post_data, file.path(results_dir, "tables", "post_data.csv")
+readr::write_csv(data_to_be_pooled, file.path(results_dir, "tables", "post_data.csv"))
 
 
 
