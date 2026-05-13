@@ -39,19 +39,26 @@ figures_dir <- "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysi
 
 png(file.path(figures_dir, "forest_post.png"),
     width  = 3000,
-    height = 800 + 200 * nrow(data_to_be_pooled),
+    height = 600 + 120 * nrow(data_to_be_pooled),
     res    = 300)
 
 forest(model_post,
        sortvar     = TE,
-       smlab       = "Hedges' g",
-       leftlabs    = c("Study", "g", "95% CI"),
+       leftcols    = c("studlab"),
+       leftlabs    = c("Study"),
+       rightcols   = c("effect.ci", "w.random"),
+       rightlabs   = c("Hedges' g [95% CI]", "Weight"),
+       smlab       = "",
        label.left  = "Favours Control",
        label.right = "Favours Intervention",
        col.diamond = "steelblue",
        print.tau2  = TRUE,
        print.I2    = TRUE,
        prediction  = TRUE,
+       
+       # 关键：给 random effects / prediction interval 下面加空行
+       addrows.below.overall = 4,
+       
        xlim        = c(-2, 2),
        main        = "Post-intervention")
 

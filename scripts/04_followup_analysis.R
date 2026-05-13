@@ -16,7 +16,10 @@ fu_mid <- effect_data %>%
   dplyr::filter(timepoint %in% c("fu_4mo", "fu_6mo"))
 
 fu_long <- effect_data %>%
-  dplyr::filter(timepoint %in% c("fu_12mo", "fu_18mo", "fu_24mo"))
+  dplyr::filter(timepoint %in% c("fu_12mo", "fu_18mo", "fu_24mo")) %>%
+  dplyr::group_by(study_id) %>%
+  dplyr::slice_max(timing_mo, n = 1, with_ties = FALSE) %>%
+  dplyr::ungroup()
 
 
 ### 3. metagen — fit the pooled effect model ###
@@ -82,6 +85,87 @@ saveRDS(model_fu_long, file.path(results_dir, "models", "model_fu_long.rds"))
 readr::write_csv(fu_short, file.path(results_dir, "tables", "fu_short.csv"))
 readr::write_csv(fu_mid, file.path(results_dir, "tables", "fu_mid.csv"))
 readr::write_csv(fu_long, file.path(results_dir, "tables", "fu_long.csv"))
+
+
+### 5. Forest plots ###
+
+figures_dir <- "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/figures"
+
+# --- 5a. Short-term follow-up (1–3 mo) ---
+png(file.path(figures_dir, "forest_fu_short.png"),
+    width = 3000, height = 800 + 200 * nrow(fu_short),
+    res = 300)
+forest(model_fu_short,
+       sortvar     = TE,
+       leftcols    = c("studlab"),
+       leftlabs    = c("Study"),
+       rightcols   = c("effect.ci", "w.random"),
+       rightlabs   = c("Hedges' g [95% CI]", "Weight"),
+       smlab       = "",
+       label.left  = "Favours Control",
+       label.right = "Favours Intervention",
+       col.diamond = "steelblue",
+       print.tau2  = TRUE,
+       print.I2    = TRUE,
+       prediction  = TRUE,
+       
+       # 关键：给 random effects / prediction interval 下面加空行
+       addrows.below.overall = 4,
+       
+       xlim        = c(-2, 2),
+       main        = "Follow-up: Short-term (1–3 months)")
+dev.off()
+
+# --- 5b. Medium-term follow-up (4–6 mo) ---
+png(file.path(figures_dir, "forest_fu_mid.png"),
+    width = 3000, height = 800 + 200 * nrow(fu_mid),
+    res = 300)
+forest(model_fu_mid,
+       sortvar     = TE,
+       leftcols    = c("studlab"),
+       leftlabs    = c("Study"),
+       rightcols   = c("effect.ci", "w.random"),
+       rightlabs   = c("Hedges' g [95% CI]", "Weight"),
+       smlab       = "",
+       label.left  = "Favours Control",
+       label.right = "Favours Intervention",
+       col.diamond = "steelblue",
+       print.tau2  = TRUE,
+       print.I2    = TRUE,
+       prediction  = TRUE,
+       
+       # 关键：给 random effects / prediction interval 下面加空行
+       addrows.below.overall = 4,,
+       xlim        = c(-2, 2),
+       main        = "Follow-up: Medium-term (4–6 months)")
+dev.off()
+
+# --- 5c. Long-term follow-up (≥12 mo) ---
+png(file.path(figures_dir, "forest_fu_long.png"),
+    width = 3000, height = 800 + 200 * nrow(fu_long),
+    res = 300)
+forest(model_fu_long,
+       sortvar     = TE,
+       leftcols    = c("studlab"),
+       leftlabs    = c("Study"),
+       rightcols   = c("effect.ci", "w.random"),
+       rightlabs   = c("Hedges' g [95% CI]", "Weight"),
+       smlab       = "",
+       label.left  = "Favours Control",
+       label.right = "Favours Intervention",
+       col.diamond = "steelblue",
+       print.tau2  = TRUE,
+       print.I2    = TRUE,
+       prediction  = TRUE,
+       
+       # 关键：给 random effects / prediction interval 下面加空行
+       addrows.below.overall = 4,
+       
+       xlim        = c(-2, 2),
+       main        = "Follow-up: Long-term (≥12 months)")
+dev.off()
+
+cat("Follow-up forest plots saved to figures/\n")
                  
                  
                  
