@@ -20,6 +20,8 @@ model_post <- metagen(
   seTE             = se_te,
   studlab          = author,
   data             = data_to_be_pooled,
+  n.e              = n_exp,       
+  n.c              = n_ctrl,       
   sm               = "SMD",
   common           = FALSE,           
   random           = TRUE,
