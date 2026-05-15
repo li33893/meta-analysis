@@ -11,6 +11,8 @@ figures_dir <- "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysi
 
 model_post <- readRDS(file.path(results_dir, "models", "model_post.rds"))
 
+source("C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/scripts/01_read_data.R")
+
 
 ### 2. Contour-enhanced funnel plot (only for console)###
 
@@ -20,6 +22,7 @@ funnel(model_post,
        contour = c(0.9, 0.95, 0.99),  # 对应三条p值边界
        col.contour = col.contour,
        studlab = TRUE)
+
 
 ### 2. Egger's test (only for console)###
 eggers <- metabias(model_post, method.bias = "Egger")
