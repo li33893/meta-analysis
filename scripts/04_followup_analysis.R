@@ -3,7 +3,7 @@
 
 
 ### 1. Load data ###
-source("C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/scripts/01_read_data.R")
+source("C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/scripts/02_compute_effect_sizes.R")
 
 
 ### 2. Subset to follow-up ####
@@ -135,7 +135,7 @@ forest(model_fu_mid,
        prediction  = TRUE,
        
        # 关键：给 random effects / prediction interval 下面加空行
-       addrows.below.overall = 4,,
+       addrows.below.overall = 4,
        xlim        = c(-2, 2),
        main        = "Follow-up: Medium-term (4–6 months)")
 dev.off()

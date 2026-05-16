@@ -1,4 +1,4 @@
-### 08_publication_bias.R 
+### 08_publication_bias.R ###
 # Small-study effects / publication bias (post-intervention only)
 # Methods: contour-enhanced funnel plot, Egger's test,
 #          Pustejovsky & Rodgers (2019), trim-and-fill
@@ -11,7 +11,7 @@ figures_dir <- "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysi
 
 model_post <- readRDS(file.path(results_dir, "models", "model_post.rds"))
 
-source("C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/scripts/01_read_data.R")
+source("C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/scripts/02_compute_effect_sizes.R")
 
 
 ### 2. Contour-enhanced funnel plot (only for console)###

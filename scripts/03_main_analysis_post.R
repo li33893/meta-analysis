@@ -3,7 +3,7 @@
 
 
 ### 1. Load data ###
-source("C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/scripts/01_read_data.R")
+source("C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysis-project/scripts/02_compute_effect_sizes.R")
 
 
 ### 2. Subset to post-test, exclude Bohr 2023 ####
