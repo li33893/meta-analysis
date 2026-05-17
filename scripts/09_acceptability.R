@@ -21,7 +21,8 @@ accept_data <- effect_data %>%
   )
 
 
-### 3. Fit pooled RR model ####
+### 3. Primary analysis: MH + IV random-effects ####
+
 model_accept_rr <- meta::metabin(
   event.e = n_dropout_exp,
   n.e     = n_exp,
@@ -32,12 +33,12 @@ model_accept_rr <- meta::metabin(
   
   sm       = "RR",
   method   = "MH",
-  MH.exact = TRUE,   # MH fixed effect without continuity correction (Cochrane Handbook)
+  MH.exact = TRUE,
   
-  common = TRUE,     # 内部保留 MH fixed effect；和 random 一起输出，便于核对
+  common = TRUE,
   random = TRUE,
   
-  method.tau       = "REML",   # 与主分析一致
+  method.tau       = "REML",
   method.random.ci = "HK",
   
   title = "Acceptability: post-intervention dropout"
@@ -45,9 +46,10 @@ model_accept_rr <- meta::metabin(
 summary(model_accept_rr)
 
 
-### 4. Print pooled RR information (random effects = primary estimate) ####
+### 4. Primary results table (random-effects = main inference) ####
+
 accept_rr_summary <- tibble::tibble(
-  model    = "Random effects",
+  model    = "Random effects (IV, REML, HK)",
   k        = model_accept_rr$k,
   rr       = exp(model_accept_rr$TE.random),
   ci_lower = exp(model_accept_rr$lower.random),
@@ -58,9 +60,9 @@ accept_rr_summary <- tibble::tibble(
 )
 print(accept_rr_summary)
 
-# 也提取 MH fixed effect 备查（不在正文报告，仅核对零格子影响）
+# MH fixed-effect (reported as model sensitivity)
 accept_rr_mh <- tibble::tibble(
-  model    = "Fixed effect (MH, exact)",
+  model    = "Fixed effect (MH, exact, no continuity correction)",
   k        = model_accept_rr$k,
   rr       = exp(model_accept_rr$TE.common),
   ci_lower = exp(model_accept_rr$lower.common),
@@ -70,18 +72,115 @@ accept_rr_mh <- tibble::tibble(
 print(accept_rr_mh)
 
 
-### 5. Save model and data ####
-saveRDS(
-  model_accept_rr,
-  file.path(results_dir, "models", "model_accept_rr.rds")
+### 5. Sensitivity: exclude single-zero studies ####
+
+single_zero_ids <- accept_data %>%
+  dplyr::filter(n_dropout_exp == 0 | n_dropout_ctrl == 0) %>%
+  dplyr::pull(study_id)
+
+cat("\nSingle-zero studies excluded in sensitivity analysis:\n")
+print(accept_data %>%
+        dplyr::filter(study_id %in% single_zero_ids) %>%
+        dplyr::select(author, n_exp, n_ctrl, n_dropout_exp, n_dropout_ctrl))
+
+accept_data_no_sz <- accept_data %>%
+  dplyr::filter(!study_id %in% single_zero_ids)
+
+model_accept_no_sz <- meta::metabin(
+  event.e = n_dropout_exp,
+  n.e     = n_exp,
+  event.c = n_dropout_ctrl,
+  n.c     = n_ctrl,
+  studlab = author,
+  data    = accept_data_no_sz,
+  
+  sm       = "RR",
+  method   = "MH",
+  MH.exact = TRUE,
+  
+  common = TRUE,
+  random = TRUE,
+  
+  method.tau       = "REML",
+  method.random.ci = "HK",
+  
+  title = "Acceptability: excluding single-zero studies"
 )
+summary(model_accept_no_sz)
+
+
+### 6. Combined summary table for write-up ####
+
+sensitivity_summary <- tibble::tibble(
+  analysis = c(
+    "Primary — Random effects (IV, k = 14)",
+    "Model sensitivity — Fixed effect (MH exact, k = 14)",
+    "Sensitivity — Random effects, excluding single-zero (k = 10)",
+    "Sensitivity — Fixed effect (MH exact), excluding single-zero (k = 10)"
+  ),
+  k = c(
+    model_accept_rr$k,
+    model_accept_rr$k,
+    model_accept_no_sz$k,
+    model_accept_no_sz$k
+  ),
+  rr = c(
+    exp(model_accept_rr$TE.random),
+    exp(model_accept_rr$TE.common),
+    exp(model_accept_no_sz$TE.random),
+    exp(model_accept_no_sz$TE.common)
+  ),
+  ci_lower = c(
+    exp(model_accept_rr$lower.random),
+    exp(model_accept_rr$lower.common),
+    exp(model_accept_no_sz$lower.random),
+    exp(model_accept_no_sz$lower.common)
+  ),
+  ci_upper = c(
+    exp(model_accept_rr$upper.random),
+    exp(model_accept_rr$upper.common),
+    exp(model_accept_no_sz$upper.random),
+    exp(model_accept_no_sz$upper.common)
+  ),
+  p_value = c(
+    model_accept_rr$pval.random,
+    model_accept_rr$pval.common,
+    model_accept_no_sz$pval.random,
+    model_accept_no_sz$pval.common
+  ),
+  i2_pct = c(
+    model_accept_rr$I2 * 100,
+    NA,
+    model_accept_no_sz$I2 * 100,
+    NA
+  ),
+  tau2 = c(
+    model_accept_rr$tau2,
+    NA,
+    model_accept_no_sz$tau2,
+    NA
+  )
+)
+print(sensitivity_summary)
+
+
+### 7. Save outputs ####
+
+saveRDS(model_accept_rr,    file.path(results_dir, "models", "model_accept_rr.rds"))
+saveRDS(model_accept_no_sz, file.path(results_dir, "models", "model_accept_no_sz.rds"))
+
 readr::write_csv(
   accept_data,
   file.path(results_dir, "tables", "acceptability_dropout_post_data.csv")
 )
+readr::write_csv(
+  sensitivity_summary,
+  file.path(results_dir, "tables", "acceptability_sensitivity_summary.csv")
+)
 
 
-### 6. Forest plot for appendix ####
+### 8. Forest plot (primary analysis) ####
+
 png(file.path(figures_dir, "forest_acceptability_dropout_rr.png"),
     width  = 3000,
     height = 600 + 120 * nrow(accept_data),
@@ -101,7 +200,7 @@ forest(model_accept_rr,
        col.diamond = "steelblue",
        print.tau2  = TRUE,
        print.I2    = TRUE,
-       prediction  = FALSE,
+       prediction  = TRUE,
        
        addrows.below.overall = 4,
        
@@ -112,5 +211,5 @@ forest(model_accept_rr,
        main        = "Acceptability: Post-intervention Dropout")
 dev.off()
 
-cat("Acceptability forest plot saved to figures/\n")
+cat("\nAcceptability forest plot saved to figures/\n")
 cat("06_acceptability.R completed successfully.\n")
