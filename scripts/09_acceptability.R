@@ -27,44 +27,21 @@ accept_data <- effect_data %>%
     !is.na(n_ctrl)
   )
 
-### Create unified study label: study_id + year ####
-### This label will be used consistently in forest plot, Baujat plot,
-### and influence diagnostics.
-
-year_col <- dplyr::case_when(
-  "year" %in% names(accept_data) ~ "year",
-  "publication_year" %in% names(accept_data) ~ "publication_year",
-  "pub_year" %in% names(accept_data) ~ "pub_year",
-  "study_year" %in% names(accept_data) ~ "study_year",
-  TRUE ~ NA_character_
-)
-
-if (is.na(year_col)) {
-  stop("No year column found. Please check whether the year column is named year, publication_year, pub_year, or study_year.")
-}
-
-accept_data <- accept_data %>%
-  dplyr::mutate(
-    study_label = paste0(study_id, " (", .data[[year_col]], ")")
-  )
-
 cat("Acceptability dataset prepared: k =", nrow(accept_data), "\n")
-cat("Study labels used in plots:\n")
-print(accept_data %>% dplyr::select(study_id, dplyr::all_of(year_col), study_label))
 
 
 ### 3. Primary analysis: MH exact + random-effects ####
 ### Common-effect estimate uses exact MH without continuity correction.
 ### Random-effects estimate uses inverse-variance pooling (REML + HK),
-### with a light continuity correction applied internally where needed
-### for individual zero-cell studies.
+### with a light continuity correction (event cells only) applied to
+### individual zero-cell studies for SE calculation.
 
 model_accept_rr <- meta::metabin(
   event.e = n_dropout_exp,
   n.e     = n_exp,
   event.c = n_dropout_ctrl,
   n.c     = n_ctrl,
-  studlab = study_label,
+  studlab = author,
   data    = accept_data,
   
   sm       = "RR",
@@ -79,7 +56,6 @@ model_accept_rr <- meta::metabin(
   
   title = "Acceptability: post-intervention dropout (primary)"
 )
-
 summary(model_accept_rr)
 
 
@@ -91,17 +67,10 @@ single_zero_ids <- accept_data %>%
   dplyr::pull(study_id)
 
 cat("\nSingle-zero studies to be excluded in Sensitivity 1:\n")
-
 print(
   accept_data %>%
     dplyr::filter(study_id %in% single_zero_ids) %>%
-    dplyr::select(
-      study_label,
-      n_exp,
-      n_ctrl,
-      n_dropout_exp,
-      n_dropout_ctrl
-    )
+    dplyr::select(author, n_exp, n_ctrl, n_dropout_exp, n_dropout_ctrl)
 )
 
 accept_data_no_sz <- accept_data %>%
@@ -112,7 +81,7 @@ model_accept_no_sz <- meta::metabin(
   n.e     = n_exp,
   event.c = n_dropout_ctrl,
   n.c     = n_ctrl,
-  studlab = study_label,
+  studlab = author,
   data    = accept_data_no_sz,
   
   sm       = "RR",
@@ -127,21 +96,20 @@ model_accept_no_sz <- meta::metabin(
   
   title = "Acceptability: excluding single-zero studies (sensitivity 1)"
 )
-
 summary(model_accept_no_sz)
 
 
 ### 5. Sensitivity 2: alternative continuity correction ####
 ### IV + RR.Cochrane = TRUE applies the heavier Cochrane-style CC
-### 0.5 to all four cells of zero-cell studies.
-### Represents the "heavy CC" end of the zero-cell-handling spectrum.
+### (0.5 to all four cells of zero-cell studies). Represents the
+### "heavy CC" end of the zero-cell-handling spectrum.
 
 model_accept_iv_cochrane <- meta::metabin(
   event.e = n_dropout_exp,
   n.e     = n_exp,
   event.c = n_dropout_ctrl,
   n.c     = n_ctrl,
-  studlab = study_label,
+  studlab = author,
   data    = accept_data,
   
   sm          = "RR",
@@ -156,40 +124,27 @@ model_accept_iv_cochrane <- meta::metabin(
   
   title = "Acceptability: IV + Cochrane-style continuity correction (sensitivity 2)"
 )
-
 summary(model_accept_iv_cochrane)
 
 
 ### 6. Exploratory 1: exclude two highest-weight studies ####
-### Post-hoc heterogeneity source exploration.
-### NOT a primary sensitivity check.
-### Reports the change in tau^2 and I^2 when the two highest-weight trials are removed.
+### Post-hoc heterogeneity source exploration. NOT a sensitivity check
+### on the primary estimate. Reports the change in τ² and I² when the
+### two most influential trials are removed.
 
-accept_data_no_high <- accept_data %>%
-  dplyr::filter(!author %in% c("O'Dea 2025", "Wright 2020"))
+accept_data_no_odea <- accept_data %>%
+  dplyr::filter(author != "O'Dea 2025")
 
-model_accept_no_high <- meta::metabin(
-  event.e = n_dropout_exp,
-  n.e     = n_exp,
-  event.c = n_dropout_ctrl,
-  n.c     = n_ctrl,
-  studlab = study_label,
-  data    = accept_data_no_high,
-  
-  sm       = "RR",
-  method   = "MH",
-  MH.exact = TRUE,
-  
-  common = TRUE,
-  random = TRUE,
-  
-  method.tau       = "REML",
-  method.random.ci = "HK",
-  
-  title = "Acceptability: excluding two highest-weight studies (exploratory)"
+model_accept_no_odea <- meta::metabin(
+  event.e = n_dropout_exp, n.e = n_exp,
+  event.c = n_dropout_ctrl, n.c = n_ctrl,
+  studlab = author, data = accept_data_no_odea,
+  sm = "RR", method = "MH", MH.exact = TRUE,
+  common = TRUE, random = TRUE,
+  method.tau = "REML", method.random.ci = "HK",
+  title = "Acceptability: excluding the single influence-flagged study (exploratory)"
 )
-
-summary(model_accept_no_high)
+summary(model_accept_no_odea)
 
 
 ### 7. Exploratory 2: influence diagnostics ####
@@ -198,15 +153,13 @@ summary(model_accept_no_high)
 
 library(metafor)
 
-accept_rma <- metafor::rma(
-  ai      = n_dropout_exp,
-  n1i     = n_exp,
-  ci      = n_dropout_ctrl,
-  n2i     = n_ctrl,
+accept_rma <- rma(
+  ai      = n_dropout_exp, n1i = n_exp,
+  ci      = n_dropout_ctrl, n2i = n_ctrl,
   measure = "RR",
   data    = accept_data,
   method  = "REML",
-  slab    = study_label
+  slab    = author
 )
 
 inf_result <- influence(accept_rma)
@@ -221,7 +174,6 @@ influence_table <- data.frame(
   weight   = round(inf_df$weight, 2),
   is_infl  = inf_df$inf
 )
-
 cat("\nInfluence diagnostics table:\n")
 print(influence_table)
 
@@ -230,10 +182,10 @@ print(influence_table)
 
 sensitivity_summary <- tibble::tibble(
   analysis = c(
-    paste0("Primary - MH exact random-effects (k = ", model_accept_rr$k, ")"),
-    paste0("Primary - MH exact common-effect (k = ", model_accept_rr$k, ")"),
+    paste0("Primary - MH exact random-effects (k = ",  model_accept_rr$k, ")"),
+    paste0("Primary - MH exact common-effect (k = ",   model_accept_rr$k, ")"),
     paste0("Sensitivity 1 - excluding single-zero (k = ", model_accept_no_sz$k, ")"),
-    paste0("Sensitivity 2 - IV + Cochrane CC (k = ", model_accept_iv_cochrane$k, ")"),
+    paste0("Sensitivity 2 - IV + Cochrane CC (k = ",   model_accept_iv_cochrane$k, ")"),
     paste0("Exploratory - excluding two high-weight studies (k = ", model_accept_no_high$k, ")")
   ),
   rr = c(
@@ -279,7 +231,6 @@ sensitivity_summary <- tibble::tibble(
     model_accept_no_high$tau2
   )
 )
-
 print(sensitivity_summary)
 
 
@@ -296,12 +247,10 @@ readr::write_csv(
   accept_data,
   file.path(results_dir, "tables", "acceptability_dropout_post_data.csv")
 )
-
 readr::write_csv(
   sensitivity_summary,
   file.path(results_dir, "tables", "acceptability_sensitivity_summary.csv")
 )
-
 readr::write_csv(
   influence_table,
   file.path(results_dir, "tables", "acceptability_influence_diagnostics.csv")
@@ -309,65 +258,58 @@ readr::write_csv(
 
 
 ### 10. Forest plot: primary analysis ####
-### Uses study_label = study_id + year.
 
 png(file.path(figures_dir, "forest_acceptability_dropout_rr.png"),
     width  = 3000,
     height = 600 + 120 * nrow(accept_data),
     res    = 300)
 
-forest(
-  model_accept_rr,
-  sortvar     = TE,
-  leftcols    = c("studlab"),
-  leftlabs    = c("Study"),
-  rightcols   = c("effect.ci", "w.random"),
-  rightlabs   = c("RR [95% CI]", "Weight"),
-  smlab       = "",
-  label.left  = "Lower dropout in Intervention",
-  label.right = "Higher dropout in Intervention",
-  col.diamond = "steelblue",
-  print.tau2  = TRUE,
-  print.I2    = TRUE,
-  prediction  = TRUE,
-  addrows.below.overall = 4,
-  xlim        = c(0.1, 10),
-  at          = c(0.25, 0.5, 1, 2, 4, 8),
-  backtransf  = TRUE,
-  main        = "Acceptability: post-intervention dropout"
-)
-
+forest(model_accept_rr,
+       sortvar     = TE,
+       leftcols    = c("studlab"),
+       leftlabs    = c("Study"),
+       rightcols   = c("effect.ci", "w.random"),
+       rightlabs   = c("RR [95% CI]", "Weight"),
+       smlab       = "",
+       label.left  = "Lower dropout in Intervention",
+       label.right = "Higher dropout in Intervention",
+       col.diamond = "steelblue",
+       print.tau2  = TRUE,
+       print.I2    = TRUE,
+       prediction  = TRUE,
+       addrows.below.overall = 4,
+       xlim        = c(0.1, 10),
+       at          = c(0.25, 0.5, 1, 2, 4, 8),
+       backtransf  = TRUE,
+       main        = "Acceptability: post-intervention dropout")
 dev.off()
 
 
 ### 11. Influence diagnostics plot ####
-### Labels are based on study_label through accept_rma$slab.
 
 png(file.path(figures_dir, "influence_diagnostics_acceptability.png"),
     width  = 3000,
     height = 2400,
     res    = 300)
-
 par(mar = c(4, 4, 2, 1))
 plot(inf_result)
-
 dev.off()
 
 
 ### 12. Baujat plot ####
-### symbol = "slab" makes the plot show study_label instead of numeric IDs.
+### Show study labels using the same author-year labels as the forest plot.
 
 png(file.path(figures_dir, "baujat_acceptability.png"),
     width  = 3000,
     height = 2400,
     res    = 300)
 
-par(mar = c(4, 4, 2, 1))
+par(mar = c(4.5, 4.5, 2, 1))
 
 baujat(
   accept_rma,
   symbol = "slab",
-  cex = 0.8
+  cex = 0.75
 )
 
 dev.off()
