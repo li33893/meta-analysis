@@ -1,4 +1,4 @@
-#### 06_acceptability.R ####
+#### 10_acceptability.R ####
 #### Purpose: Acceptability analysis using post-intervention dropout ####
 #### Effect size: Risk Ratio (RR) ####
 #### Primary: MH exact + REML + Hartung-Knapp

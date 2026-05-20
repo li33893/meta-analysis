@@ -1,4 +1,4 @@
-### 08_publication_bias.R ###
+### 09_publication_bias.R ###
 # Small-study effects / publication bias (post-intervention only)
 # Methods: contour-enhanced funnel plot, Egger's test,
 #          Pustejovsky & Rodgers (2019), trim-and-fill
