@@ -1,0 +1,13 @@
+Tier,Subgroup variable,Level,k,Hedges' g,95% CI,p (within),I² [95% CI],p (between)
+Confirmatory,Control type,Passive,7,0.35,"[-0.13, 0.83]",.123,"79.0% [56.7, 89.8]",.499
+Confirmatory,Control type,Minimally active,7,0.21,"[0.05, 0.37]",.019,"10.2% [0.0, 73.8]",
+Confirmatory,Baseline severity,Low,10,0.27,"[0.05, 0.49]",.020,"52.4% [2.5, 76.8]",.953
+Confirmatory,Baseline severity,High,4,0.29,"[-0.58, 1.15]",.369,"81.8% [52.8, 93.0]",
+Exploratory,Human contact,No,10,0.23,"[0.03, 0.44]",.027,"56.6% [12.2, 78.6]",.570
+Exploratory,Human contact,Yes,4,0.41,"[-0.55, 1.38]",.265,"79.4% [45.1, 92.3]",
+Exploratory,Relaxation,Present,8,0.34,"[-0.01, 0.69]",.056,"55.9% [2.8, 80.0]",.534
+Exploratory,Relaxation,Absent,6,0.21,"[-0.13, 0.55]",.167,"73.7% [39.7, 88.5]",
+Exploratory,Problem-solving,Present,9,0.37,"[0.05, 0.69]",.030,"69.2% [38.4, 84.6]",.159
+Exploratory,Problem-solving,Absent,5,0.13,"[-0.12, 0.39]",.227,"41.2% [0.0, 78.3]",
+Exploratory,Homework,Present,8,0.38,"[-0.01, 0.77]",.056,"72.6% [44.0, 86.6]",.267
+Exploratory,Homework,Absent,6,0.17,"[-0.04, 0.39]",.094,"45.7% [0.0, 78.5]",
