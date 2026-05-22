@@ -6,7 +6,7 @@ This repository contains the R scripts and data files for a systematic review an
 
 ## Project Aim
 
-This meta-analysis evaluates the effectiveness of unguided self-help CBT interventions in reducing depressive symptoms among adolescents. Because adolescents' help-seeking is shaped by developmental, family, school, and access-related constraints, "unguided" is operationalised as the absence of human-delivered CBT content. Non-therapeutic contact, such as motivational prompting, technical support, orientation, or reminders, does not disqualify a study.
+This meta-analysis evaluates the effectiveness of unguided self-help CBT interventions in reducing depressive symptoms among adolescents. Because adolescents' help-seeking is shaped by developmental, family, school, and access-related constraints, "unguided" is operationaliZed as the absence of human-delivered CBT content. Non-therapeutic contact, such as motivational prompting, technical support, orientation, or reminders, does not disqualify a study.
 
 The review includes RCTs comparing unguided self-help CBT interventions with waitlist, treatment-as-usual, assessment-only, or minimal-contact control conditions.
 
@@ -18,7 +18,6 @@ The review includes RCTs comparing unguided self-help CBT interventions with wai
 
 1. What is the post-intervention effect of unguided self-help CBT on adolescent depressive symptoms?
 2. Are intervention effects maintained at follow-up?
-3. How acceptable are unguided self-help CBT interventions, as reflected by differential dropout rates between intervention and control conditions?
 
 ### Exploratory Questions
 
@@ -31,6 +30,10 @@ Where data are sufficient, the project examines whether effects differ by:
 - number of therapeutic components, examined through meta-regression;
 - publication year, examined through post-hoc meta-regression;
 - sample size, examined through post-hoc meta-regression.
+
+### Extended Question
+
+How acceptable are unguided self-help CBT interventions?
 
 ---
 
@@ -215,9 +218,59 @@ meta-analysis-project/
 
 ---
 
-## Notes for Future Updates
+## Troubleshooting and Analytical Notes
 
-- Keep `Methods Overview` short and scannable.
-- Put detailed methodological explanations in the thesis Methods chapter, not in this README.
-- Use `Key Analytical Decisions` only for decisions that affect reproducibility or interpretation.
-- If the included-study count changes, update `post_data.csv`, the row-count assertions, the publication-bias note, and the included-study table together.
+This section records methodological and coding issues that are easy to forget when rerunning or revising the analysis. Short versions of the same decisions are also listed in **Key Analytical Decisions** above.
+
+### 1. Mixing endpoint and change-score effect sizes
+
+**Problem:** Three studies contributed change-score SMDs rather than endpoint SMDs: Ackerson (1998), Makarushka (2011), and Rohde (2015). Analysing them separately would leave only *k* = 3 change-score studies, making the separate synthesis unstable and any endpoint-versus-change-score subgroup comparison underpowered.
+
+**Methodological concern:** The Cochrane Handbook §10.5.2 and Harrer et al. caution that endpoint and change-score estimates may differ when baseline imbalance, regression to the mean, or inconsistent reporting is present.
+
+**Resolution:** The primary analysis combines endpoint and change-score SMDs. This is justified using Ostinelli et al. (2024, *Research Synthesis Methods*), who analysed individual participant data from 61 iCBT depression trials and found no substantive difference between endpoint-based, change-score-based, and mixed SMD pooling approaches. The Cochrane-level concern should still be acknowledged in the thesis Methods section.
+
+### 2. Single-zero dropout events in the acceptability analysis
+
+**Problem:** Four studies had zero dropout events in one arm: Fleming (2012), Ip (2016), Poppelaars (2016), and Smith (2015). These create single-zero cells in the 2 × 2 dropout tables.
+
+**Why this is not a simple rare-event problem:** Dropout was not rare across the dataset as a whole. Several non-zero studies had substantial dropout rates, and some single-zero studies were not very small, including Ip et al. (2016) with 257 randomised participants and Poppelaars et al. (2016) with 102 randomised participants. The zero cells may therefore reflect study design, follow-up procedures, or reporting conventions rather than only random rarity.
+
+**Resolution:** The primary acceptability analysis uses `meta::metabin()` with Mantel-Haenszel estimation and `MH.exact = TRUE`, retaining single-zero studies without applying an arbitrary continuity correction. A sensitivity analysis excluding the four single-zero studies is run alongside the primary analysis to check whether their inclusion materially changes the pooled estimate.
+
+### 3. Cross-sheet join issue after `clean_names()`
+
+The `Study_Info` sheet uses column `C` as the study identifier. After `janitor::clean_names()`, this becomes `c`, not `study_id`. When joining study-level moderators into the analysis data, rename it explicitly:
+
+```r
+study_info %>%
+  dplyr::select(
+    study_id = c,
+    control_type,
+    baseline_severity,
+    human_contact
+  )
+```
+
+Use a defensive row-count check after joins, especially for the main post-intervention dataset:
+
+```r
+stopifnot(nrow(post_data) == 14)
+```
+
+If this fails, check whether a join dropped or duplicated rows.
+
+### 3. Cross-sheet inner_join silently drops rows
+**Problem:** Subgroup and meta-regression scripts join effect_data (from 02_compute_effect_sizes.R) with study_info (from 01_read_data.R) on a study ID column. After janitor::clean_names(), the ID column in Study_Info (originally labelled "C" in Excel) becomes c — a single lowercase letter — not study_id. Joining on study_id produced a zero-row data frame with no error message, because inner_join simply found no matching keys and returned empty rather than crashing.
+**Fix.** Always rename immediately after reading:
+rstudy_info <- study_info %>%
+  dplyr::select(study_id = c, dplyr::everything())
+And add a defensive assertion after every cross-sheet join:
+rpost_data <- effect_data %>%
+  dplyr::filter(timepoint == "post") %>%
+  dplyr::inner_join(study_info, by = "study_id")
+
+stopifnot(nrow(post_data) == 14)
+The stopifnot turns a silent wrong-answer bug into an immediate, interpretable error.
+
+---
