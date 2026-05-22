@@ -79,13 +79,22 @@ How acceptable are unguided self-help CBT interventions?
 
 | Sheet | Key Variables |
 |---|---|
-| `Study_Info` | `study_id`, `author`, `year`, `country`, `program`, `publication_type`, `funding`, `n_rand_exp`, `n_rand_ctrl`, `age_range`, `mean_age`, `pct_female`, `dosage`, `format`, `delivery`, `inclusion_criteria`, `cbt_components`, `control_type`, `support_level`, `baseline_severity`, `recruitment` |
-| `Outcome_Data` | `study_id`, `timepoint`, `timing_mo`, `measure`, `m_type`, `sd_type`, pre/post means and SDs, CI bounds, notes |
-| `RoB_2.0` | `study_id`, D1–D5 domain judgements, overall judgement, and all justification fields |
-| `PRISMA_Flow` | Counts for each PRISMA stage |
-| `Exclusion_Log` | Excluded studies and exclusion reasons |
+| `Study_Info` | `C` (renamed to `study_id` in R), `Author`, `Year`, `Country`, `Program`, `N_rand_exp`, `N_rand_ctrl`, `Age_range`, `Mean_age`, `%Female`, `Recruitment`, `Inclusion_criteria`, `Outcome_measure`, `CBT_components`, `Control_type`, `Support_level`, `Dosage`, `dose_intensity_total`, `human_contact`, `component_count`, `Format`, `Delivery`, `Baseline_severity`, `Publication_type`, `Funding`, `Notes` |
+| `Outcome_Data` | `Study_ID`, `Author`, `Timepoint`, `Timing_mo`, `N_exp`, `N_ctrl`, `Pre_M_exp`, `Pre_SD_exp`, `Pre_M_ctrl`, `Pre_SD_ctrl`, `M_exp`, `SD_exp`, `M_ctrl`, `SD_ctrl`, `Measure`, `M_type`, `SD_type`, `CI_lower_exp`, `CI_upper_exp`, `CI_lower_ctrl`, `CI_upper_ctrl`, `change_mean_exp`, `change_mean_ctrl`, `CI_lower_between`, `CI_upper_between`, `reported_d_between`, `TE`, `seTE`, `N_dropout_exp`, `N_dropout_ctrl`, `Notes` |
+| `RoB_2.0` | `Study ID`, `Author (Year)`, D1–D5 judgement columns, D1–D5 justification columns, `Overall`, `Overall Justification` |
+| `PRISMA_Flow` | `Stage`, `n` |
+| `Exclusion_Log` | `Study ID`, `Author (Year)`, `Title`, `Exclusion Reason Code`, `Exclusion Reason Detail` |
 
-> **Cross-sheet join note:** The `C` column in `Study_Info` becomes `c` after `janitor::clean_names()`. Always rename it with `select(study_id = c, ...)` before joining. Use `inner_join()` with a defensive row-count check, for example `stopifnot(nrow(df) == 14)` when constructing the main post-intervention dataset.
+> **Cross-sheet join note:** In `Study_Info`, the study ID column is named `C` in Excel. After `janitor::clean_names()`, it becomes `c`, not `study_id`. Rename it before joining:
+>
+> ```r
+> study_info <- study_info %>%
+>   dplyr::select(study_id = c, dplyr::everything())
+> ```
+>
+> In `Outcome_Data`, `Study_ID` becomes `study_id` after `clean_names()`, so it can then be joined with `study_info` by `study_id`. Add a defensive row-count check after important joins, for example `stopifnot(nrow(post_data) == 14)` for the main post-intervention dataset.
+>
+> **PRISMA note:** The `PRISMA_Flow` sheet has a title row and a blank row before the actual headers. Read it with `skip = 2` so that `Stage` and `n` are treated as column names.
 
 ---
 
@@ -95,7 +104,7 @@ The table below lists the study records currently documented in the review datas
 
 | Study | Program | Country | Year |
 |---|---|---|---|
-| Ackerson et al. | Workbook CBT | USA | 1998 |
+| Ackerson et al. | Feeling Good | USA | 1998 |
 | Fleming et al. | SPARX | New Zealand | 2012 |
 | Stice et al. | Feeling Good | USA | 2008 |
 | Makarushka | Blueblaster | UK | 2011 |
