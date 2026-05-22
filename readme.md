@@ -85,17 +85,6 @@ How acceptable are unguided self-help CBT interventions?
 | `PRISMA_Flow` | `Stage`, `n` |
 | `Exclusion_Log` | `Study ID`, `Author (Year)`, `Title`, `Exclusion Reason Code`, `Exclusion Reason Detail` |
 
-> **Cross-sheet join note:** In `Study_Info`, the study ID column is named `C` in Excel. After `janitor::clean_names()`, it becomes `c`, not `study_id`. Rename it before joining:
->
-> ```r
-> study_info <- study_info %>%
->   dplyr::select(study_id = c, dplyr::everything())
-> ```
->
-> In `Outcome_Data`, `Study_ID` becomes `study_id` after `clean_names()`, so it can then be joined with `study_info` by `study_id`. Add a defensive row-count check after important joins, for example `stopifnot(nrow(post_data) == 14)` for the main post-intervention dataset.
->
-> **PRISMA note:** The `PRISMA_Flow` sheet has a title row and a blank row before the actual headers. Read it with `skip = 2` so that `Stage` and `n` are treated as column names.
-
 ---
 
 ## Included Study Records
