@@ -216,9 +216,7 @@ This section records methodological and coding issues that are easy to forget wh
 
 ### 1. Mixing endpoint and change-score effect sizes
 
-**Problem:** Three studies contributed change-score SMDs rather than endpoint SMDs: Ackerson (1998), Makarushka (2011), and Rohde (2015). Analysing them separately would leave only *k* = 3 change-score studies, making the separate synthesis unstable and any endpoint-versus-change-score subgroup comparison underpowered.
-
-**Methodological concern:** The Cochrane Handbook §10.5.2 and Harrer et al. caution that endpoint and change-score estimates may differ when baseline imbalance, regression to the mean, or inconsistent reporting is present.
+**Problem:** Two studies contributed change-score SMDs rather than endpoint SMDs: Stallard (2024) and Bohr (2023). Analysing them separately would leave only *k* = 2 change-score studies, making the separate synthesis unstable and any endpoint-versus-change-score subgroup comparison underpowered.The Cochrane Handbook §10.5.2 and Harrer et al. caution that endpoint and change-score estimates may differ when baseline imbalance, regression to the mean, or inconsistent reporting is present.
 
 **Resolution:** The primary analysis combines endpoint and change-score SMDs. This is justified using Ostinelli et al. (2024, *Research Synthesis Methods*), who analysed individual participant data from 61 iCBT depression trials and found no substantive difference between endpoint-based, change-score-based, and mixed SMD pooling approaches. The Cochrane-level concern should still be acknowledged in the thesis Methods section.
 
