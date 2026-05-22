@@ -230,11 +230,18 @@ This section records methodological and coding issues that are easy to forget wh
 
 ### 2. Single-zero dropout events in the acceptability analysis
 
-**Problem:** Four studies had zero dropout events in one arm: Fleming (2012), Ip (2016), Poppelaars (2016), and Smith (2015). These create single-zero cells in the 2 × 2 dropout tables.
+**Problem.** Some studies reported zero dropout events in one arm, creating single-zero cells in the 2 × 2 dropout table. 
 
-**Why this is not a simple rare-event problem:** Dropout was not rare across the dataset as a whole. Several non-zero studies had substantial dropout rates, and some single-zero studies were not very small, including Ip et al. (2016) with 257 randomised participants and Poppelaars et al. (2016) with 102 randomised participants. The zero cells may therefore reflect study design, follow-up procedures, or reporting conventions rather than only random rarity.
+In the current dataset, the single-zero studies are Ip (2016), Poppelaars (2016), and Smith (2015). Dropout was not rare across the dataset as a whole, so this was treated as a zero-cell handling issue rather than a classical rare-event problem.
 
-**Resolution:** The primary acceptability analysis uses `meta::metabin()` with Mantel-Haenszel estimation and `MH.exact = TRUE`, retaining single-zero studies without applying an arbitrary continuity correction. A sensitivity analysis excluding the four single-zero studies is run alongside the primary analysis to check whether their inclusion materially changes the pooled estimate.
+**Resolution.** The primary acceptability analysis uses `meta::metabin()` with risk ratios, Mantel-Haenszel estimation, and `MH.exact = TRUE`. The random-effects estimate is reported with REML and Hartung-Knapp adjustment.
+
+Two sensitivity analyses are used to check whether the result depends on zero-cell handling:
+
+1. excluding the dynamically identified single-zero studies;
+2. re-running the model with inverse-variance pooling and the Cochrane-style continuity correction (`RR.Cochrane = TRUE`).
+
+An additional exploratory analysis uses Viechtbauer-Cheung influence diagnostics and a Baujat plot to examine whether any individual study contributes disproportionately to heterogeneity or to the pooled estimate. In the current run, O'Dea (2025) is examined separately as the influence-flagged study.
 
 ### 3. Cross-sheet joins return zero rows
 
