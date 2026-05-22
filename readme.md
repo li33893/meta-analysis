@@ -1,83 +1,186 @@
 # Meta-Analysis of Unguided Self-Help CBT for Adolescent Depressive Symptoms
 
-This repository contains the R scripts and data-management workflow for a systematic review and meta-analysis on unguided self-help cognitive behavioural therapy (CBT) interventions for adolescents with depressive symptoms.
+This repository contains the R scripts and data files for a systematic review and meta-analysis on unguided self-help cognitive behavioural therapy (CBT) interventions for adolescents with depressive symptoms. The analysis follows a numbered script workflow so that data import, effect size computation, main analysis, follow-up analysis, risk of bias assessment, subgroup analysis, meta-regression, publication bias assessment, and acceptability analysis can be run in a reproducible order.
 
-The analysis workflow is organised step by step so that data import, effect size calculation, main meta-analysis, subgroup analysis, sensitivity analysis, publication bias assessment, and acceptability analysis can be run in a reproducible order.
+---
 
 ## Project Aim
 
-This meta-analysis evaluates whether unguided or minimally supported self-help CBT interventions reduce depressive symptoms among adolescents.
+This meta-analysis evaluates the effectiveness of unguided self-help CBT interventions in reducing depressive symptoms among adolescents, considering unique ecological feature in help-seeking around this age. "Unguided" is therefore operationalized as: no human delivers CBT content, and motivational prompting or technical support does not disqualify a study. The review includes RCTs comparing such interventions with waitlist, treatment-as-usual, assessment-only, or minimal-contact control conditions.
 
-The review focuses on adolescents aged 10–19 with elevated or clinically significant depressive symptoms and includes randomised controlled trials comparing unguided self-help CBT interventions with waitlist, treatment-as-usual, attention-control, or information-only control conditions.
+---
 
 ## Research Questions
 
 ### Primary Questions
-
-1. What is the overall post-intervention effect of unguided self-help CBT on adolescent depressive symptoms?
+1. What is the overall feature of, post-intervention effect of unguided self-help CBT on adolescent depressive symptoms?
 2. Are intervention effects maintained at follow-up?
-3. How acceptable are unguided self-help CBT interventions, as reflected by dropout or completion rates?
+3. How acceptable are unguided self-help CBT interventions, as reflected by differential dropout rates between conditions?
 
-### Secondary / Exploratory Questions
-
-Where data are sufficient, the project will examine whether effects differ by:
-
-- Control type
-- Support level
-- Baseline depression severity
-- Delivery format
-- Intervention components
-- Follow-up timing
-- Risk of bias
+### Exploratory Questions
+Where data are sufficient, the project examines whether effects differ by:
+- Control type (passive vs. minimally active)
+- Baseline depression severity (low vs. high)
+- Presence of human contact during the intervention period
+- Inclusion of certain certain therapeutic component (relaxation, problem-solving, homework)
+- Number of therapeutic components (meta-regression)
+- Publication year (post-hoc meta-regression)
+- Sample size (post-hoc meta-regression)
+---
 
 ## Methods Overview
 
 | Component | Specification |
 |---|---|
 | Reporting framework | PRISMA 2020 |
-| Study design | Randomised controlled trials and pilot RCTs |
+| Study design | Individual RCTs, cluster RCTs (with ICC correction), and pilot RCTs |
 | Population | Adolescents aged 10–19 with elevated or clinically significant depressive symptoms |
-| Intervention | CBT-based self-help intervention without therapist-delivered treatment guidance |
-| Comparator | Waitlist, treatment-as-usual, attention-control, or information-only control |
-| Primary outcome | Depressive symptoms measured by validated scales |
-| Effect size | Hedges' g |
-| Model | Random-effects meta-analysis |
-| Risk of bias | Cochrane RoB 2.0 |
-| Software | R |
+| Intervention | Unguided self-help CBT (Beck's cognitive model + cognitive restructuring + ≥1 behavioural component), per Tong et al. (2024) |
+| Comparator | Waitlist, treatment-as-usual, assessment-only, or minimal-contact control |
+| Primary outcome | Depressive symptoms measured by validated scales; depression must be a primary or key outcome |
+| Included publication types | Peer-reviewed journal articles and dissertations (1998–2025) |
+| Effect size | Hedges' *g* |
+| Pooling model | Random-effects meta-analysis, REML estimator, Hartung-Knapp adjustment |
+| Effect size computation | Three pathways by `m_type`: (A) raw endpoint means/SDs via `metafor::escalc()`; (B) change scores with SD back-calculated from CI; (C) pre-calculated between-group *d* with SE from CI via `meta::metagen()` |
+| Mixing endpoint and change scores | Justified by Ostinelli et al. (2024, *Research Synthesis Methods*), who demonstrated no substantive difference in pooled SMD for depression across 61 iCBT IPD studies |
+| Follow-up classification | Short-term: < 3 months; mid-term: 3–6 months; long-term: > 6 months |
+| Subgroup analyses | Six analyses: control type, baseline severity, human contact, relaxation, problem-solving, homework; all with `tau.common = TRUE` + REML + HK |
+| Meta-regression | (1) Pre-specified: number of CBT components (`component_count`); (2) Post-hoc: publication year (centred at 2010) |
+| Publication bias | Contour-enhanced funnel plot; Egger's test (retained for transparency); Pustejovsky & Rodgers (2019) bias-corrected test (primary, mandatory for SMD); trim-and-fill; 3PSM excluded (*k* < 20 threshold) |
+| Acceptability | Differential dropout analysed via `meta::metabin()` with Mantel-Haenszel method (`MH.exact = TRUE`); REML + HK random-effects reported alongside fixed-effect |
+| Risk of bias | Cochrane RoB 2.0; visualised with `robvis` |
+| Software | R (`meta`, `metafor`, `robvis`, `dplyr`, `ggplot2`, `readxl`, `writexl`, `janitor`) |
+
+---
 
 ## Repository Structure
+
+All files are stored in a flat working directory (no subdirectory nesting). Files are organised by type below for clarity.
 
 ```text
 meta-analysis-project/
 │
-├── README.md
+├── meta-analysis-project.Rproj
 ├── .gitignore
+├── readme.md
 │
-├── data/
-│   └── data.xlsx
+├── data/                              # Raw and processed data files
+│   ├── data.xlsx                      # Master data (sheets: Study_Info, Outcome_Data,
+│   │                                  #   RoB_2.0, PRISMA_Flow, Exclusion_Log)
+│   ├── effect_data.csv                # Computed Hedges' g, all timepoints (output of 02)
+│   ├── post_data.csv                  # Post-intervention rows, k = 14 (output of 02/03)
+│   ├── fu_short.csv / fu_mid.csv / fu_long.csv   # Follow-up rows by window (output of 04)
+│   └── acceptability_dropout_post_data.csv        # Dropout counts (output of 10)
 │
-├── scripts/
-│   ├── 00_setup.R
-│   ├── 01_read_data.R
-│   ├── 02_compute_effect_sizes.R
-│   ├── 03_main_analysis_post.R
-│   ├── 04_followup_analysis.R
-│   ├── 05_subgroup_analysis.R
-│   ├── 06_metaregression.R
-│   ├── 07_sensitivity_analysis.R
-│   ├── 08_publication_bias.R
-│   ├── 09_acceptability.R
-│   └── 99_run_all.R
+├── scripts/                           # Numbered R scripts; run in order
+│   ├── 00_setup.R                     # Install and load packages
+│   ├── 01_read_data.R                 # Import data.xlsx, clean names, type conversion
+│   ├── 02_compute_effect_sizes.R      # Compute Hedges' g (pathways A/B/C)
+│   ├── 03_main_analysis_post.R        # Main post-intervention analysis (k = 14)
+│   ├── 04_followup_analysis.R         # Follow-up analyses (short / mid / long)
+│   ├── 05_risk_of_bias.R              # RoB 2.0 visualisation via robvis
+│   ├── 06_subgroup_analysis.R         # Six subgroup analyses
+│   ├── 07_metaregression.R            # Pre-specified and post-hoc meta-regression 
+|   ├── 08_sensitivity.R               # Sensitivity analyses
+│   ├── 09_publication_bias.R          # Funnel, Egger's, Pustejovsky & Rodgers, trim-and-fill
+│   ├── 10_acceptability.R             # Differential dropout (metabin, MH)
+│   └── 100_prisma_flow.R              # PRISMA 2020 flow diagram
+│
+├── figures/                           # All output plots (300 dpi PNG)
 │
 ├── results/
-│   ├── tables/
-│   ├── figures/
-│   └── models/
+│   ├── models/                        # Saved model objects (.rds)
+│   └── tables/                        # Output tables (.csv)
 │
-├── prisma/
-│   ├── prisma_flow_data.csv
-│   ├── exclusion_log.csv
-│   └── search_strategy.md
-│
-└── docs/
-    └── thesis.docx
+└── thesis/                            # Thesis documents
+    └── Thesis_Final.docx
+```
+
+---
+
+## Script Execution Order
+
+```r
+source("00_setup.R")                # 1. Install/load packages
+source("01_read_data.R")            # 2. Import and clean data
+source("02_compute_effect_sizes.R") # 3. Compute Hedges' g
+source("03_main_analysis_post.R")   # 4. Main analysis (post-intervention)
+source("04_followup_analysis.R")    # 5. Follow-up analyses
+source("05_risk_of_bias.R")         # 6. RoB 2.0 visualisation
+source("06_subgroup_analysis.R")    # 7. Subgroup analyses
+# 07_metaregression.R               # 8. [To be created] Meta-regression
+source("09_publication_bias.R")     # 9. Publication bias assessment
+source("10_acceptability.R")        # 10. Acceptability (dropout) analysis
+source("100_prisma_flow.R")         # 11. PRISMA flow diagram
+```
+
+Each script sources `02_compute_effect_sizes.R` at the top (which in turn sources `01_read_data.R`), so all scripts can be run independently. All scripts use absolute paths via `results_dir` and `figures_dir` variables defined at the top of each file.
+
+---
+
+## Key Analytical Decisions
+
+**Effect size mixing:** Three studies contribute change-score SMDs rather than endpoint SMDs. Mixing is justified by Ostinelli et al. (2024), who found no substantive pooled-estimate difference across both types in a large iCBT depression IPD dataset. Cochrane Handbook §10.5.2 concern is acknowledged.
+
+**Cluster RCT:** Bohr et al. (2023) is a cluster RCT with no ICC reported; it is excluded from the main analysis and included in a sensitivity analysis without ICC correction.
+
+**Baseline severity:** Studies not meeting a validated clinical cutoff at baseline are flagged for sensitivity analysis rather than excluded outright.
+
+**Acceptability:** Four studies have single-arm zero dropout events (Fleming 2012, Ip 2016, Poppelaars 2016, Smith 2015). Primary analysis uses `MH.exact = TRUE` to handle zero cells without continuity correction (Harrer et al.). A sensitivity analysis excludes these four studies.
+
+**Publication bias:** Pustejovsky & Rodgers (2019) is the primary test because standard Egger's test produces an artifactual correlation between *g* and SE for SMD-type effect sizes. Egger's is retained for transparency. 3PSM requires *k* ≥ 20 and is not applicable here (*k* = 14).
+
+---
+
+## Data Dictionary (data.xlsx sheets)
+
+| Sheet | Key Variables |
+|---|---|
+| Study_Info | study_id, author, year, country, program, publication_type, funding, n_rand_exp, n_rand_ctrl, age_range, mean_age, pct_female, dosage, format, delivery, inclusion_criteria, cbt_components, control_type, support_level, baseline_severity, recruitment |
+| Outcome_Data | study_id, timepoint, timing_mo, measure, m_type, sd_type, pre/post means and SDs, CI bounds, notes |
+| RoB_2.0 | study_id, D1–D5 domain judgements, overall judgement, all justification fields |
+| PRISMA_Flow | Counts for each PRISMA stage |
+| Exclusion_Log | Excluded studies with reasons |
+
+> **Cross-sheet join note:** The `C` column in Study_Info becomes `c` after `janitor::clean_names()`. Always rename with `select(study_id = c, ...)` and use `inner_join` with a defensive `stopifnot(nrow(df) == 14)` assertion.
+
+---
+
+## Included Studies (k = 14 main analysis)
+
+| Study | Program | Country | Year |
+|---|---|---|---|
+| Ackerson et al. | Workbook CBT | USA | 1998 |
+| Fleming et al. | SPARX | New Zealand | 2012 |
+| Stice et al. | Feeling Good | USA | 2008 |
+| Makarushka | Blueblaster | UK | 2011 |
+| Merry et al. | SPARX | New Zealand | 2012 |
+| Stasiak et al. | The Journey | New Zealand | 2014 |
+| Ip et al. | CatchIt | Hong Kong | 2016 |
+| Poppelaars et al. | SPARX | Netherlands | 2016 |
+| Ranney et al. | iDove | USA | 2018 |
+| O'Dea et al. | Weclick | Australia | 2020 |
+| Smith et al. | Stressbusters | UK | 2015 |
+| Rohde et al. | Feeling Good | USA | 2015 |
+| Wright et al. | Stressbusters | UK | 2020 |
+| O'Dea et al. | MobiliseMe/ClearlyMe | Australia | 2025 |
+| Stallard et al. | BlueIce | UK | 2024 |
+
+> Bohr et al. (2023) — cluster RCT, no ICC; excluded from main analysis, included in sensitivity analysis.
+
+---
+
+## Main Analysis Results (Post-Intervention, k = 14)
+
+| Estimate | Value |
+|---|---|
+| Hedges' *g* | 0.27 |
+| 95% CI | [0.06, 0.47] |
+| *t*(13) | 2.80 |
+| *p* | .015 |
+| *I*² | 63.2% |
+| τ² | 0.055 |
+| τ | 0.234 |
+| Prediction interval | [−0.27, 0.80] |
+
+Model: REML estimator with Hartung-Knapp adjustment.
