@@ -238,39 +238,21 @@ This section records methodological and coding issues that are easy to forget wh
 
 **Resolution:** The primary acceptability analysis uses `meta::metabin()` with Mantel-Haenszel estimation and `MH.exact = TRUE`, retaining single-zero studies without applying an arbitrary continuity correction. A sensitivity analysis excluding the four single-zero studies is run alongside the primary analysis to check whether their inclusion materially changes the pooled estimate.
 
-### 3. Cross-sheet join issue after `clean_names()`
-
-The `Study_Info` sheet uses column `C` as the study identifier. After `janitor::clean_names()`, this becomes `c`, not `study_id`. When joining study-level moderators into the analysis data, rename it explicitly:
-
-```r
-study_info %>%
-  dplyr::select(
-    study_id = c,
-    control_type,
-    baseline_severity,
-    human_contact
-  )
-```
-
-Use a defensive row-count check after joins, especially for the main post-intervention dataset:
-
-```r
-stopifnot(nrow(post_data) == 14)
-```
-
-If this fails, check whether a join dropped or duplicated rows.
-
 ### 3. Cross-sheet inner_join silently drops rows
 **Problem:** Subgroup and meta-regression scripts join effect_data (from 02_compute_effect_sizes.R) with study_info (from 01_read_data.R) on a study ID column. After janitor::clean_names(), the ID column in Study_Info (originally labelled "C" in Excel) becomes c — a single lowercase letter — not study_id. Joining on study_id produced a zero-row data frame with no error message, because inner_join simply found no matching keys and returned empty rather than crashing.
 **Fix.** Always rename immediately after reading:
+```r
 rstudy_info <- study_info %>%
   dplyr::select(study_id = c, dplyr::everything())
+```
 And add a defensive assertion after every cross-sheet join:
+```r
 rpost_data <- effect_data %>%
   dplyr::filter(timepoint == "post") %>%
   dplyr::inner_join(study_info, by = "study_id")
 
 stopifnot(nrow(post_data) == 14)
+```
 The stopifnot turns a silent wrong-answer bug into an immediate, interpretable error.
 
 ---
