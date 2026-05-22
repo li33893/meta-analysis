@@ -101,7 +101,7 @@ The table below lists the study records currently documented in the review datas
 | Makarushka | Blueblaster | UK | 2011 |
 | Merry et al. | SPARX | New Zealand | 2012 |
 | Stasiak et al. | The Journey | New Zealand | 2014 |
-| Ip et al. | CatchIt | Hong Kong | 2016 |
+| Ip et al. | Grapse the Opportunity | Hong Kong, China | 2016 |
 | Poppelaars et al. | SPARX | Netherlands | 2016 |
 | Ranney et al. | iDove | USA | 2018 |
 | O'Dea et al. | Weclick | Australia | 2020 |
