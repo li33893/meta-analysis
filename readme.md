@@ -103,15 +103,21 @@ Where data are sufficient, the project examines whether effects differ by:
 > Bohr et al. (2023) — cluster RCT, no ICC; excluded from main analysis, included in sensitivity analysis.
 
 ---
-## Troubleshooting
-### 1. Mixing endpoint and change-score SMDs
-Problem. Three studies (Makarushka 2011, Rohde 2015, Ackerson 1998) report change scores rather than endpoint means and SDs. The natural approach is to synthesise the two types separately. However, this produces a subgroup of k = 3 change-score studies against k = 11 endpoint studies. Both Cochrane Handbook §10.5.2 and Harrer et al. Doing Meta-Analysis with R explicitly caution against mixing the two types in the same pooled estimate, citing potential bias from baseline imbalance and differential regression to the mean. At the same time, k = 3 is too small to support a separate synthesis — a two-group comparison would have almost no power to detect a difference even if one existed.
-Resolution. Ostinelli et al. (2024, Research Synthesis Methods) directly tested this question using individual participant data from 61 iCBT depression trials. They found no substantive difference in pooled SMD estimates when endpoint and change-score studies were analysed together versus separately, even under baseline imbalance. This provided the field-specific empirical justification needed to proceed with mixing. The decision is disclosed in the Methods section with a citation to Ostinelli et al., and the Cochrane principle-level concern is acknowledged.
+## 1. Mixing endpoint and change-score effect sizes
 
-### 2. Single-zero dropout events and acceptability analysis
-Problem. Four studies (Fleming 2012, Ip 2016, Poppelaars 2016, Smith 2015) have zero dropout events in one arm, producing zero cells in the 2×2 dropout table. The standard response in meta-analysis is to treat zero cells as evidence of rare events and apply either a continuity correction (add 0.5) or Peto OR. Neither was appropriate here.
-On closer inspection, the zero-event studies are not uniformly small: Ip et al. (2016) randomised 257 participants and Poppelaars et al. (2016) randomised 102. Zero dropout in one arm of a 257-person trial is not a rare-event problem — it reflects a design or reporting feature. Furthermore, the studies with non-zero dropout in both arms showed substantial dropout rates (some exceeding 30%), which means dropout is not a rare event across the dataset as a whole. The dataset presents an unusual combination: a high single-zero proportion (4/14 studies, 29%) alongside high overall dropout rates — a situation that does not fit the classical rare-event framework described in Cochrane Handbook §10.4.4.
-Finding a solution. Working through this required filtering a large number of online resources, most of which turned out to be commercial statistics consulting advertisements rather than methodological guidance. After considerable searching, a genuinely useful and detailed solution was found in a post by a medical student at Peking University, who provided a free and thorough walkthrough of the zero-cell problem in binary-outcome meta-analysis with no commercial motive. The core recommendation aligned with Harrer et al.: use metabin() with MH.exact = TRUE, which implements an exact Mantel-Haenszel method that handles single-zero cells correctly without a continuity correction. A sensitivity analysis excluding the four zero-event studies runs alongside the primary analysis to confirm that their inclusion does not materially change the estimate.
+Three studies reported change-score outcomes rather than endpoint means and SDs: Makarushka (2011), Rohde (2015), and Ackerson (1998). Although endpoint and change-score estimates are ideally analysed separately, doing so would leave only *k* = 3 change-score studies, making a separate synthesis unstable and a subgroup comparison underpowered.
+
+The main methodological concern is that endpoint and change-score estimates may differ when baseline imbalance or regression to the mean is present, as noted by the Cochrane Handbook (§10.5.2) and Harrer et al. However, Ostinelli et al. (2024) examined individual participant data from 61 iCBT depression trials and found no substantive difference between pooled SMD estimates based on endpoint scores, change scores, or mixed approaches.
+
+Therefore, endpoint and change-score effect sizes were combined in the primary analysis, with this decision reported transparently and justified using Ostinelli et al. (2024).
+
+## 2. Single-zero dropout events in the acceptability analysis
+
+Four studies had zero dropout events in one arm: Fleming (2012), Ip (2016), Poppelaars (2016), and Smith (2015). This created single-zero cells in the 2 × 2 dropout tables.
+
+Although zero cells are often treated as a rare-event problem, dropout was not rare across the dataset as a whole. Some studies had substantial dropout rates, and several single-zero studies were not very small, such as Ip et al. (2016) with 257 randomised participants and Poppelaars et al. (2016) with 102 participants. Thus, the issue likely reflected a mixture of design, follow-up, or reporting features rather than simple event rarity.
+
+The primary acceptability analysis therefore used `metabin()` with `MH.exact = TRUE`, allowing single-zero studies to be retained without applying an arbitrary continuity correction. A sensitivity analysis excluding the four single-zero studies was also conducted to assess whether their inclusion materially changed the pooled estimate.
 
 ---
 
