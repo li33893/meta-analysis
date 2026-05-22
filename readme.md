@@ -240,7 +240,7 @@ This section records methodological and coding issues that are easy to forget wh
 
 ### 3. Cross-sheet inner_join silently drops rows
 **Problem:** Subgroup and meta-regression scripts join effect_data (from 02_compute_effect_sizes.R) with study_info (from 01_read_data.R) on a study ID column. After janitor::clean_names(), the ID column in Study_Info (originally labelled "C" in Excel) becomes c — a single lowercase letter — not study_id. Joining on study_id produced a zero-row data frame with no error message, because inner_join simply found no matching keys and returned empty rather than crashing.
-**Fix.** Always rename immediately after reading:
+**Resolution:** Always rename immediately after reading:
 ```r
 rstudy_info <- study_info %>%
   dplyr::select(study_id = c, dplyr::everything())
