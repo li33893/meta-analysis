@@ -52,82 +52,6 @@ Where data are sufficient, the project examines whether effects differ by:
 
 ---
 
-## Repository Structure
-
-All files are stored in a flat working directory (no subdirectory nesting). Files are organised by type below for clarity.
-
-```text
-meta-analysis-project/
-│
-├── meta-analysis-project.Rproj
-├── .gitignore
-├── readme.md
-│
-├── data/                              # Raw and processed data files
-│   ├── data.xlsx                      # Master data (sheets: Study_Info, Outcome_Data,
-│   │                                  #   RoB_2.0, PRISMA_Flow, Exclusion_Log)
-│   ├── effect_data.csv                # Computed Hedges' g, all timepoints (output of 02)
-│   ├── post_data.csv                  # Post-intervention rows, k = 14 (output of 02/03)
-│   ├── fu_short.csv / fu_mid.csv / fu_long.csv   # Follow-up rows by window (output of 04)
-│   └── acceptability_dropout_post_data.csv        # Dropout counts (output of 10)
-│
-├── scripts/                           # Numbered R scripts; run in order
-│   ├── 00_setup.R                     # Install and load packages
-│   ├── 01_read_data.R                 # Import data.xlsx, clean names, type conversion
-│   ├── 02_compute_effect_sizes.R      # Compute Hedges' g (pathways A/B/C)
-│   ├── 03_main_analysis_post.R        # Main post-intervention analysis (k = 14)
-│   ├── 04_followup_analysis.R         # Follow-up analyses (short / mid / long)
-│   ├── 05_risk_of_bias.R              # RoB 2.0 visualisation via robvis
-│   ├── 06_subgroup_analysis.R         # Six subgroup analyses
-│   ├── 07_metaregression.R            # Pre-specified and post-hoc meta-regression 
-|   ├── 08_sensitivity.R               # Sensitivity analyses
-│   ├── 09_publication_bias.R          # Funnel, Egger's, Pustejovsky & Rodgers, trim-and-fill
-│   ├── 10_acceptability.R             # Differential dropout (metabin, MH)
-│   └── 100_prisma_flow.R              # PRISMA 2020 flow diagram
-│
-├── figures/                           # All output plots (300 dpi PNG)
-│
-├── results/
-│   ├── models/                        # Saved model objects (.rds)
-│   └── tables/                        # Output tables (.csv)
-│
-└── thesis/                            # Thesis documents
-    └── Thesis_Final.docx
-```
-
----
-
-Getting Started
-Prerequisites
-
-R ≥ 4.2.0 (download)
-RStudio (download)
-
-Setup and Running
-1. Open the project
-Open meta-analysis-project.Rproj in RStudio. This sets the working directory automatically — do not use setwd().
-2. Install and load packages
-Run 00_setup.R once. It checks whether each required package is already installed before attempting installation, so re-running it on an existing setup is safe.
-rsource("scripts/00_setup.R")
-Required packages: meta, metafor, robvis, dplyr, tidyverse, readxl, writexl, readr, janitor, tibble.
-3. Run the analysis scripts in order
-Each script from 02 onwards sources 02_compute_effect_sizes.R at the top, so scripts can also be run independently. The first time through, run them in sequence:
-rsource("scripts/01_read_data.R")
-source("scripts/02_compute_effect_sizes.R")
-source("scripts/03_main_analysis_post.R")
-source("scripts/04_followup_analysis.R")
-source("scripts/05_risk_of_bias.R")
-source("scripts/06_subgroup_analysis.R")
-# source("scripts/07_metaregression.R")   # to be created
-source("scripts/09_publication_bias.R")
-source("scripts/10_acceptability.R")
-source("scripts/100_prisma_flow.R")
-4. Output locations
-Output typeLocationForest plots, funnel plot, RoB plots, PRISMA diagramfigures/Pooled estimate tables, subgroup summaryresults/tables/Saved model objects (.rds)results/models/
-5. Absolute paths
-Each script defines figures_dir and results_dir as absolute paths at the top. Update these to match your local directory before running.
----
-
 ## Key Analytical Decisions
 
 **Effect size mixing:** Three studies contribute change-score SMDs rather than endpoint SMDs. Mixing is justified by Ostinelli et al. (2024), who found no substantive pooled-estimate difference across both types in a large iCBT depression IPD dataset. Cochrane Handbook §10.5.2 concern is acknowledged.
@@ -179,14 +103,82 @@ Each script defines figures_dir and results_dir as absolute paths at the top. Up
 > Bohr et al. (2023) — cluster RCT, no ICC; excluded from main analysis, included in sensitivity analysis.
 
 ---
-Troubleshooting
-1. Mixing endpoint and change-score SMDs
+## Troubleshooting
+### 1. Mixing endpoint and change-score SMDs
 Problem. Three studies (Makarushka 2011, Rohde 2015, Ackerson 1998) report change scores rather than endpoint means and SDs. The natural approach is to synthesise the two types separately. However, this produces a subgroup of k = 3 change-score studies against k = 11 endpoint studies. Both Cochrane Handbook §10.5.2 and Harrer et al. Doing Meta-Analysis with R explicitly caution against mixing the two types in the same pooled estimate, citing potential bias from baseline imbalance and differential regression to the mean. At the same time, k = 3 is too small to support a separate synthesis — a two-group comparison would have almost no power to detect a difference even if one existed.
 Resolution. Ostinelli et al. (2024, Research Synthesis Methods) directly tested this question using individual participant data from 61 iCBT depression trials. They found no substantive difference in pooled SMD estimates when endpoint and change-score studies were analysed together versus separately, even under baseline imbalance. This provided the field-specific empirical justification needed to proceed with mixing. The decision is disclosed in the Methods section with a citation to Ostinelli et al., and the Cochrane principle-level concern is acknowledged.
 
-2. Single-zero dropout events and acceptability analysis
+### 2. Single-zero dropout events and acceptability analysis
 Problem. Four studies (Fleming 2012, Ip 2016, Poppelaars 2016, Smith 2015) have zero dropout events in one arm, producing zero cells in the 2×2 dropout table. The standard response in meta-analysis is to treat zero cells as evidence of rare events and apply either a continuity correction (add 0.5) or Peto OR. Neither was appropriate here.
 On closer inspection, the zero-event studies are not uniformly small: Ip et al. (2016) randomised 257 participants and Poppelaars et al. (2016) randomised 102. Zero dropout in one arm of a 257-person trial is not a rare-event problem — it reflects a design or reporting feature. Furthermore, the studies with non-zero dropout in both arms showed substantial dropout rates (some exceeding 30%), which means dropout is not a rare event across the dataset as a whole. The dataset presents an unusual combination: a high single-zero proportion (4/14 studies, 29%) alongside high overall dropout rates — a situation that does not fit the classical rare-event framework described in Cochrane Handbook §10.4.4.
 Finding a solution. Working through this required filtering a large number of online resources, most of which turned out to be commercial statistics consulting advertisements rather than methodological guidance. After considerable searching, a genuinely useful and detailed solution was found in a post by a medical student at Peking University, who provided a free and thorough walkthrough of the zero-cell problem in binary-outcome meta-analysis with no commercial motive. The core recommendation aligned with Harrer et al.: use metabin() with MH.exact = TRUE, which implements an exact Mantel-Haenszel method that handles single-zero cells correctly without a continuity correction. A sensitivity analysis excluding the four zero-event studies runs alongside the primary analysis to confirm that their inclusion does not materially change the estimate.
+
+---
+
+## Repository Structure
+
+All files are stored in a flat working directory (no subdirectory nesting). Files are organised by type below for clarity.
+
+```text
+meta-analysis-project/
+│
+├── meta-analysis-project.Rproj
+├── .gitignore
+├── readme.md
+│
+├── data/                              # Raw and processed data files
+│   ├── data.xlsx                      # Master data (sheets: Study_Info, Outcome_Data,
+│   │                                  #   RoB_2.0, PRISMA_Flow, Exclusion_Log)
+│   ├── effect_data.csv                # Computed Hedges' g, all timepoints (output of 02)
+│   ├── post_data.csv                  # Post-intervention rows, k = 14 (output of 02/03)
+│   ├── fu_short.csv / fu_mid.csv / fu_long.csv   # Follow-up rows by window (output of 04)
+│   └── acceptability_dropout_post_data.csv        # Dropout counts (output of 10)
+│
+├── scripts/                           # Numbered R scripts; run in order
+│   ├── 00_setup.R                     # Install and load packages
+│   ├── 01_read_data.R                 # Import data.xlsx, clean names, type conversion
+│   ├── 02_compute_effect_sizes.R      # Compute Hedges' g (pathways A/B/C)
+│   ├── 03_main_analysis_post.R        # Main post-intervention analysis (k = 14)
+│   ├── 04_followup_analysis.R         # Follow-up analyses (short / mid / long)
+│   ├── 05_risk_of_bias.R              # RoB 2.0 visualisation via robvis
+│   ├── 06_subgroup_analysis.R         # Six subgroup analyses
+│   ├── 07_metaregression.R            # Pre-specified and post-hoc meta-regression 
+|   ├── 08_sensitivity.R               # Sensitivity analyses
+│   ├── 09_publication_bias.R          # Funnel, Egger's, Pustejovsky & Rodgers, trim-and-fill
+│   ├── 10_acceptability.R             # Differential dropout (metabin, MH)
+│   └── 100_prisma_flow.R              # PRISMA 2020 flow diagram
+│
+├── figures/                           # All output plots (300 dpi PNG)
+│
+├── results/
+│   ├── models/                        # Saved model objects (.rds)
+│   └── tables/                        # Output tables (.csv)
+│
+└── thesis/                            # Thesis documents
+    └── Thesis_Final.docx
+```
+
+---
+
+### Getting Started
+#### Prerequisites
+
+R ≥ 4.2.0 (download)
+RStudio (download)
+
+#### Setup and Running
+1. Open the project
+Open meta-analysis-project.Rproj in RStudio. This sets the working directory automatically — do not use setwd().
+2. Install and load packages
+Run 00_setup.R once. It checks whether each required package is already installed before attempting installation, so re-running it on an existing setup is safe.
+rsource("scripts/00_setup.R")
+Required packages: meta, metafor, robvis, dplyr, tidyverse, readxl, writexl, readr, janitor, tibble.
+3. Run the analysis scripts in order
+Each script from 02 onwards sources 02_compute_effect_sizes.R at the top, so scripts can also be run independently. The first time through, run them in sequence:
+4. Output locations
+Output typeLocationForest plots, funnel plot, RoB plots, PRISMA diagramfigures/Pooled estimate tables, subgroup summaryresults/tables/Saved model objects (.rds)results/models/
+5. Absolute paths
+Each script defines figures_dir and results_dir as absolute paths at the top. Update these to match your local directory before running.
+---
 
 
