@@ -126,12 +126,6 @@ meta-analysis-project/
 │
 ├── data/
 │   ├── data.xlsx                               # Master data file
-│   ├── effect_data.csv                         # Computed Hedges' g, all timepoints
-│   ├── post_data.csv                           # Post-intervention rows for main analysis
-│   ├── fu_short.csv                            # Short-term follow-up rows
-│   ├── fu_mid.csv                              # Mid-term follow-up rows
-│   ├── fu_long.csv                             # Long-term follow-up rows
-│   └── acceptability_dropout_post_data.csv     # Dropout counts for acceptability analysis
 │
 ├── scripts/
 │   ├── 00_setup.R                              # Install and load packages
