@@ -238,21 +238,32 @@ This section records methodological and coding issues that are easy to forget wh
 
 **Resolution:** The primary acceptability analysis uses `meta::metabin()` with Mantel-Haenszel estimation and `MH.exact = TRUE`, retaining single-zero studies without applying an arbitrary continuity correction. A sensitivity analysis excluding the four single-zero studies is run alongside the primary analysis to check whether their inclusion materially changes the pooled estimate.
 
-### 3. Cross-sheet inner_join silently drops rows
-**Problem:** Subgroup and meta-regression scripts join effect_data (from 02_compute_effect_sizes.R) with study_info (from 01_read_data.R) on a study ID column. After janitor::clean_names(), the ID column in Study_Info (originally labelled "C" in Excel) becomes c — a single lowercase letter — not study_id. Joining on study_id produced a zero-row data frame with no error message, because inner_join simply found no matching keys and returned empty rather than crashing.
-**Resolution:** Always rename immediately after reading:
+### 3. Cross-sheet joins return zero rows
+
+**Problem.** Some scripts, such as subgroup analysis and meta-regression, join `effect_data` with `study_info` by `study_id`.
+
+A common source of error is the study ID column in `Study_Info`. In the Excel file, this column is labelled `C`. After `janitor::clean_names()`, it becomes `c`, not `study_id`.
+
+If this column is not renamed before joining, `inner_join()` may return zero rows because it cannot find matching study IDs. This can be easy to miss because `inner_join()` does not necessarily produce an error; it simply returns an empty data frame.
+
+**Fix.** Rename the ID column immediately after reading `Study_Info`:
+
 ```r
-rstudy_info <- study_info %>%
+study_info <- study_info %>%
   dplyr::select(study_id = c, dplyr::everything())
 ```
-And add a defensive assertion after every cross-sheet join:
+
+After important joins, add a row-count check:
+
 ```r
-rpost_data <- effect_data %>%
+post_data <- effect_data %>%
   dplyr::filter(timepoint == "post") %>%
   dplyr::inner_join(study_info, by = "study_id")
 
 stopifnot(nrow(post_data) == 14)
 ```
+
+This makes the script stop immediately if the join fails, instead of allowing an empty dataset to flow into later analyses.
 The stopifnot turns a silent wrong-answer bug into an immediate, interpretable error.
 
 ---
