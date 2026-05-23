@@ -231,5 +231,6 @@ readr::write_csv(subgroup_fmt,
 # 在控制台输出 Markdown 表（也可以直接复制贴进 Word）
 print(knitr::kable(subgroup_fmt, format = "pipe", align = "lllrrlrll"))
 
-summary(sg_control)
-
+summary(sg_hw)
+summary(sg_rx)
+summary(sg_ps)
