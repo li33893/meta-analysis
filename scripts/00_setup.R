@@ -13,7 +13,8 @@ required_packages <- c(
   "writexl",    # export Excel files: write_xlsx()
   "readr",      # read and write CSV files: read_csv(), write_csv()
   "tibble",     # modern way of data frame
-  "robvis"      # Risk of Bias plots
+  "robvis",     # Risk of Bias plots
+  "knitr"       # create formatted tables: kable() 
 )
 
 

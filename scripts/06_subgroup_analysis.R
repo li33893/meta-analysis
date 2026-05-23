@@ -75,6 +75,23 @@ model_sub <- meta::metagen(
   prediction       = TRUE
 )
 
+### 4.5. Override summary.meta to print within-subgroup p-values for g ###
+
+summary.meta <- function(object, ...) {
+  meta:::print.meta(object, ...)
+  if (!is.null(object$subgroup.levels)) {
+    cat("\nWithin-subgroup p-values for pooled g (random effects, HK):\n")
+    df <- data.frame(
+      Level = object$subgroup.levels,
+      k     = object$k.w,
+      g     = sprintf("%.4f", object$TE.random.w),
+      p_g   = sprintf("%.4f", object$pval.random.w)
+    )
+    print(df, row.names = FALSE)
+  }
+  invisible(object)
+}
+
 
 ### 5. Subgroup analyses (fixed-effects plural model) ###
 
@@ -105,6 +122,7 @@ extract_sg <- function(sg, var_name) {
     g                 = sg$TE.random.w,
     ci_lo             = sg$lower.random.w,
     ci_hi             = sg$upper.random.w,
+    p_g               = sg$pval.random.w,
     I2                = sg$I2.w,
     tau2              = sg$tau2.w,
     Q_between         = sg$Q.b.random,       # 标量，tibble 会自动 recycle
@@ -123,3 +141,95 @@ subgroup_summary <- dplyr::bind_rows(
 
 readr::write_csv(subgroup_summary, 
                  file.path(results_dir, "tables", "subgroup_summary.csv"))
+
+
+### 7. Build publication-ready Table 5 ###
+
+# 辅助函数：从一个 sg 对象抠全部需要的数字
+extract_sg_full <- function(sg, var_name, tier) {
+  tibble::tibble(
+    tier              = tier,
+    subgroup_variable = var_name,
+    level             = as.character(sg$subgroup.levels),
+    k                 = sg$k.w,
+    g_num             = sg$TE.random.w,
+    ci_lo_num         = sg$lower.random.w,
+    ci_hi_num         = sg$upper.random.w,
+    p_within_num      = sg$pval.random.w,
+    I2_num            = sg$I2.w,
+    I2_lo_num         = sg$lower.I2.w,
+    I2_hi_num         = sg$upper.I2.w,
+    p_between_num     = sg$pval.Q.b.random
+  )
+}
+
+# 组装 12 行原始数字表
+subgroup_raw <- dplyr::bind_rows(
+  extract_sg_full(sg_control,  "Control type",       "Confirmatory"),
+  extract_sg_full(sg_severity, "Baseline severity",  "Confirmatory"),
+  extract_sg_full(sg_human,    "Human contact",      "Exploratory"),
+  extract_sg_full(sg_rx,       "Relaxation",         "Exploratory"),
+  extract_sg_full(sg_ps,       "Problem-solving",    "Exploratory"),
+  extract_sg_full(sg_hw,       "Homework",           "Exploratory")
+)
+
+# 帮助函数：格式化 p 值（< .001 不写数字，否则 3 位小数无前导零）
+fmt_p <- function(p) {
+  ifelse(p < .001, "< .001",
+         sub("^0", "", sprintf("%.3f", p)))
+}
+
+# 格式化：把 level 标签也美化一下
+relabel <- function(var, lvl) {
+  dplyr::case_when(
+    lvl == "TRUE"     ~ "Present",
+    lvl == "FALSE"    ~ "Absent",
+    lvl == "Yes"      ~ "Yes",
+    lvl == "No"       ~ "No",
+    lvl == "Passive"  ~ "Passive",
+    lvl == "Minimal"  ~ "Minimally active",
+    lvl == "Low"      ~ "Low",
+    lvl == "High"     ~ "High",
+    TRUE              ~ lvl
+  )
+}
+
+# 格式化后的展示表：每行一个亚组层
+subgroup_fmt <- subgroup_raw %>%
+  dplyr::mutate(
+    level_disp    = purrr::map2_chr(subgroup_variable, level, relabel),
+    g_disp        = sprintf("%.2f", g_num),
+    ci_disp       = sprintf("[%.2f, %.2f]", ci_lo_num, ci_hi_num),
+    p_within_disp = fmt_p(p_within_num),
+    I2_disp       = sprintf("%.1f%% [%.1f, %.1f]", 
+                            I2_num*100, I2_lo_num*100, I2_hi_num*100),
+    p_between_disp = fmt_p(p_between_num)
+  ) %>%
+  # 只在每个 variable 的第一行显示 p_between，第二行留空
+  dplyr::group_by(subgroup_variable) %>%
+  dplyr::mutate(
+    p_between_disp = ifelse(dplyr::row_number() == 1, p_between_disp, "")
+  ) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(tier, subgroup_variable, level_disp, k, 
+                g_disp, ci_disp, p_within_disp, I2_disp, p_between_disp) %>%
+  dplyr::rename(
+    Tier             = tier,
+    `Subgroup variable` = subgroup_variable,
+    Level            = level_disp,
+    `Hedges' g`      = g_disp,
+    `95% CI`         = ci_disp,
+    `p (within)`     = p_within_disp,
+    `I² [95% CI]`    = I2_disp,
+    `p (between)`    = p_between_disp
+  )
+
+# 写出 CSV：Excel 打开后全选 → Ctrl+C → 粘贴到 Word
+readr::write_csv(subgroup_fmt, 
+                 file.path(results_dir, "tables", "table5_subgroups_formatted.csv"))
+
+# 在控制台输出 Markdown 表（也可以直接复制贴进 Word）
+print(knitr::kable(subgroup_fmt, format = "pipe", align = "lllrrlrll"))
+
+summary(sg_control)
+
