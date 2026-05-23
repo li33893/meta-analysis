@@ -12,15 +12,10 @@ figures_dir <- "C:/Users/32283/OneDrive/바탕 화면/meta-analysis/meta-analysi
 
 ### 2. Prepare meta-regression data ###
 
-### 2-1. extract effect_data with publish year ###
+### 2-1. extract post effect_data ###
 
 post_data <- effect_data %>%
-  dplyr::filter(timepoint == "post", study_id != 3) %>%
-  dplyr::mutate(
-    publish_year = as.numeric(
-      substr(author, nchar(author) - 3, nchar(author))
-    ) 
-  )
+  dplyr::filter(timepoint == "post", study_id != 3)
 
 ### 2-2. join component_count from study_info (NOT outcome_data) ###
 
@@ -31,17 +26,15 @@ post_data <- post_data %>%
     by = "study_id"
   )
 
-### 2-3. centre the moderators (assign back!) ###
+### 2-3. centre the moderator (assign back!) ###
 
 post_data <- post_data %>%
   dplyr::mutate(
-    year_c            = publish_year - 2010,
     component_count_c = component_count - mean(component_count, na.rm =TRUE)
-    
   )
 
 
-### 3. Base random-effects model (to update what "componentcount" and "publishyear" matters)
+### 3. Base random-effects model (same spec as main analysis)
 
 model_mr <- meta::metagen(
   TE               = te, 
@@ -62,10 +55,7 @@ model_mr <- meta::metagen(
 ### 4-1. component count (pre-specified) ###
 
 mr_comp <- meta::metareg(model_mr, ~ component_count_c)
-
-### 4-2. publication year (post-hoc) ###
-
-mr_year <- meta::metareg(model_mr, ~ year_c)
+print(mr_comp)
 
 
 ### 5. Extract results into a table ###
@@ -91,10 +81,7 @@ extract_mr <- function(mr, predictor) {
   )
 }
 
-table6_raw <- dplyr::bind_rows(
-  extract_mr(mr_comp, "Component count (centred)"),
-  extract_mr(mr_year, "Publication year (centred at 2010)")
-)
+table6_raw <- extract_mr(mr_comp, "Component count (centred)")
 print(table6_raw)
 
 
@@ -118,19 +105,11 @@ print(knitr::kable(table6_fmt, format = "pipe", align = "lrrrlrrr"))
 ### 7. Save files ###
 
 saveRDS(mr_comp, file.path(results_dir, "models", "mr_component.rds"))
-saveRDS(mr_year, file.path(results_dir, "models", "mr_year.rds"))
 
 readr::write_csv(table6_fmt, file.path(results_dir, "tables", "table6_metaregression.csv"))
 
 
-### 8. Bubble plots ###
-
-png(file.path(figures_dir, "bubble_year.png"), width = 2400, height = 1800, res = 300)
-meta::bubble(mr_year,
-             xlab = "Publication year (centred at 2010)",
-             ylab = "Hedges' g",
-             studlab = TRUE, cex.studlab = 0.7)
-dev.off()
+### 8. Bubble plot ###
 
 png(file.path(figures_dir, "bubble_component.png"), width = 2400, height = 1800, res = 300)
 meta::bubble(mr_comp,
