@@ -42,9 +42,17 @@ outliers <- outlier_table %>%
 print(outliers)
 
 
-
 ### 2-2. leave-one-out ###
+
 # run leave_one_out
+loo <- metainf(model, pooled = "random")
 
-
-# Fleming and Ackerson (CI was wide and )
+# clean the table
+loo_table <- dataframe(
+  omitted_study = loo$studlab,
+  g             = round(loo$TE, 3),
+  ci_lower      = round(loo$lower, 3),
+  ci_upper      = round(loo$upper, 3) 
+)
+loo_table <- loo_table[order(loo_table$g), ]   # 按剔除后 g 排序
+print(loo_table)
