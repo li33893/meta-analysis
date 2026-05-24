@@ -69,7 +69,7 @@ How acceptable are unguided self-help CBT interventions?
 
 **Baseline severity:** Studies not meeting a validated clinical cutoff at baseline are flagged for sensitivity analysis rather than excluded outright.
 
-**Acceptability:** Four studies have single-arm zero dropout events: Fleming (2012), Ip (2016), Poppelaars (2016), and Smith (2015). The primary acceptability analysis uses `meta::metabin()` with Mantel-Haenszel estimation and `MH.exact = TRUE`, allowing single-zero studies to be retained without applying an arbitrary continuity correction. A sensitivity analysis excluding these four studies is conducted to assess robustness.
+**Acceptability:** Three studies have single-arm zero dropout events: Ip (2016), Poppelaars (2016), and Smith (2015). The primary acceptability analysis uses `meta::metabin()` with Mantel-Haenszel estimation and `MH.exact = TRUE`, allowing single-zero studies to be retained without applying an arbitrary continuity correction. A sensitivity analysis excluding these three studies is conducted to assess robustness.
 
 **Publication bias:** Pustejovsky and Rodgers' (2019) SMD-corrected test is treated as the primary funnel-asymmetry test because standard Egger's test can produce an artifactual association between SMDs and their standard errors. Egger's test is retained for transparency. The three-parameter selection model is not applied because *k* is below the recommended threshold of 20.
 
@@ -224,7 +224,7 @@ This section records methodological and coding issues that are easy to forget wh
 
 **Problem.** Some studies reported zero dropout events in one arm, creating single-zero cells in the 2 × 2 dropout table.
 
-In the current dataset, the single-zero studies are Fleming (2012), Ip (2016), Poppelaars (2016), and Smith (2015). Dropout was not rare across the dataset as a whole, so this was treated as a zero-cell handling issue rather than a classical rare-event problem.
+In the current dataset, the single-zero studies are Ip (2016), Poppelaars (2016), and Smith (2015). Dropout was not rare across the dataset as a whole, so this was treated as a zero-cell handling issue rather than a classical rare-event problem.
 
 **Resolution.** The primary acceptability analysis uses `meta::metabin()` with risk ratios, Mantel-Haenszel estimation, and `MH.exact = TRUE`. The random-effects estimate is reported with REML and Hartung-Knapp adjustment.
 
@@ -234,8 +234,6 @@ Two sensitivity analyses are used to check whether the result depends on zero-ce
 2. re-running the model with inverse-variance pooling and the Cochrane-style continuity correction (`RR.Cochrane = TRUE`).
 
 An additional exploratory analysis uses Viechtbauer-Cheung influence diagnostics and a Baujat plot to examine whether any individual study contributes disproportionately to heterogeneity or to the pooled estimate. In the current run, O'Dea (2025) is examined separately as the influence-flagged study.
-
-> **Note on the acceptability sample.** The acceptability dataset (`acceptability_dropout_post_data.csv`) is not identical to the main-analysis set. It includes Bohr et al. (2023) and excludes Stasiak et al. (2014). Confirm this composition is intended and state it explicitly in the thesis Methods, since the *k* will not match the main analysis.
 
 ### 3. Cross-sheet joins return zero rows
 
@@ -268,9 +266,9 @@ This makes the script stop immediately if the join fails, instead of allowing an
 
 ## References
 
-- Harrer, M., Cuijpers, P., Furukawa, T. A., & Ebert, D. D. (2021). *Doing meta-analysis with R: A hands-on guide*. Chapman & Hall/CRC.
-- Higgins, J. P. T., Thomas, J., Chandler, J., Cumpston, M., Li, T., Page, M. J., & Welch, V. A. (Eds.). (2023). *Cochrane handbook for systematic reviews of interventions* (Version 6.4). Cochrane.
-- Ostinelli, E. G., Efthimiou, O., Luo, Y., Miguel, C., Karyotaki, E., Cuijpers, P., Furukawa, T. A., Salanti, G., & Cipriani, A. (2024). Combining endpoint and change data did not affect the summary standardised mean difference in pairwise and network meta-analyses: An empirical study in depression. *Research Synthesis Methods, 15*(5), 758–768. 
-- Page, M. J., McKenzie, J. E., Bossuyt, P. M., Boutron, I., Hoffmann, T. C., Mulrow, C. D., … Moher, D. (2021). The PRISMA 2020 statement: An updated guideline for reporting systematic reviews. *BMJ, 372*, n71.
-- Pustejovsky, J. E., & Rodgers, M. A. (2019). Testing for funnel plot asymmetry of standardized mean differences. *Research Synthesis Methods, 10*(1), 57–71.
-- Sterne, J. A. C., Savović, J., Page, M. J., Elbers, R. G., Blencowe, N. S., Boutron, I., … Higgins, J. P. T. (2019). RoB 2: A revised tool for assessing risk of bias in randomised trials. *BMJ, 366*, l4898.
+- Harrer, M., Cuijpers, P., Furukawa, T. A., & Ebert, D. D. (2021). *Doing meta-analysis with R: A hands-on guide*. Chapman & Hall/CRC Press. https://doi.org/10.1201/9781003107347
+- Higgins, J. P. T., Thomas, J., Chandler, J., Cumpston, M., Li, T., Page, M. J., & Welch, V. A. (Eds.). (2024). *Cochrane handbook for systematic reviews of interventions* (Version 6.5). Cochrane. https://training.cochrane.org/handbook
+- Ostinelli, E. G., Efthimiou, O., Luo, Y., Miguel, C., Karyotaki, E., Cuijpers, P., Furukawa, T. A., Salanti, G., & Cipriani, A. (2024). Combining endpoint and change data did not affect the summary standardised mean difference in pairwise and network meta-analyses: An empirical study in depression. *Research Synthesis Methods, 15*(5), 758–768. https://doi.org/10.1002/jrsm.1719
+- Page, M. J., McKenzie, J. E., Bossuyt, P. M., Boutron, I., Hoffmann, T. C., Mulrow, C. D., … Moher, D. (2021). The PRISMA 2020 statement: An updated guideline for reporting systematic reviews. *BMJ, 372*, n71. https://doi.org/10.1136/bmj.n71
+- Pustejovsky, J. E., & Rodgers, M. A. (2019). Testing for funnel plot asymmetry of standardized mean differences. *Research Synthesis Methods, 10*(1), 57–71. https://doi.org/10.1002/jrsm.1332
+- Sterne, J. A. C., Savović, J., Page, M. J., Elbers, R. G., Blencowe, N. S., Boutron, I., … Higgins, J. P. T. (2019). RoB 2: A revised tool for assessing risk of bias in randomised trials. *BMJ, 366*, l4898. https://doi.org/10.1136/bmj.l4898
