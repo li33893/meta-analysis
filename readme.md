@@ -6,7 +6,7 @@ This repository contains the R scripts and data files for a systematic review an
 
 ## Project Aim
 
-This meta-analysis evaluates the effectiveness of unguided self-help CBT interventions in reducing depressive symptoms among adolescents. Because adolescents' help-seeking is shaped by developmental, family, school, and access-related constraints, "unguided" is operationaliZed as the absence of human-delivered CBT content. Non-therapeutic contact, such as motivational prompting, technical support, orientation, or reminders, does not disqualify a study.
+This meta-analysis evaluates the effectiveness of unguided self-help CBT interventions in reducing depressive symptoms among adolescents. Because adolescents' help-seeking is shaped by developmental, family, school, and access-related constraints, "unguided" is operationalized as the absence of human-delivered CBT content. Non-therapeutic contact, such as motivational prompting, technical support, orientation, or reminders, does not disqualify a study.
 
 The review includes RCTs comparing unguided self-help CBT interventions with waitlist, treatment-as-usual, assessment-only, or minimal-contact control conditions.
 
@@ -63,7 +63,7 @@ How acceptable are unguided self-help CBT interventions?
 
 ## Key Analytical Decisions
 
-**Effect-size inputs:** Most studies contributed endpoint SMDs, while three studies contributed change-score SMDs: Ackerson (1998), Makarushka (2011), and Rohde (2015). Although endpoint and change-score estimates are ideally examined separately, a separate change-score synthesis would contain only *k* = 3 studies. The two types were therefore combined in the primary analysis. The Cochrane Handbook §10.5.2 concern is acknowledged, and Ostinelli et al. (2024) is used as field-specific empirical justification because their IPD analysis of iCBT depression trials found no substantive pooled-estimate difference across endpoint, change-score, and mixed SMD approaches.
+**Effect-size inputs:** Most studies contributed endpoint SMDs. Of the 14 studies, 11 contributed endpoint means and SDs (computed via `escalc()`), and one, O'Dea (2025), contributed a pre-calculated between-group *d* with its standard error derived from the reported CI; both are endpoint-type effects. Two studies contributed change-score SMDs: Stallard (2024) and Fleming (2012). Because a separate change-score synthesis would contain only *k* = 2 studies, endpoint-type and change-score effects were combined in the primary analysis. The Cochrane Handbook §10.5.2 concern about mixing endpoint and change-score SMDs is acknowledged, and Ostinelli et al. (2024) is used as field-specific empirical justification: their IPD analysis of 61 iCBT depression trials found no substantive pooled-estimate difference across endpoint-based, change-score-based, and mixed SMD approaches.
 
 **Cluster RCT:** Bohr et al. (2023) is a cluster RCT with no ICC reported. It is excluded from the main analysis and included in a sensitivity analysis without ICC correction.
 
@@ -89,20 +89,20 @@ How acceptable are unguided self-help CBT interventions?
 
 ## Included Study Records
 
-The table below lists the study records currently documented in the review dataset. The main post-intervention model uses the subset available in `post_data.csv`.
+The table below lists the study records currently documented in the review dataset. The main post-intervention model uses the subset available in `post_data.csv` (*k* = 14; Bohr et al., 2023 is excluded, see note below).
 
 | Study | Program | Country | Year |
 |---|---|---|---|
 | Ackerson et al. | Feeling Good | USA | 1998 |
+| Bohr et al. | SPARX | Canada | 2023 |
 | Fleming et al. | SPARX | New Zealand | 2012 |
 | Stice et al. | Feeling Good | USA | 2008 |
 | Makarushka | Blueblaster | UK | 2011 |
-| Merry et al. | SPARX | New Zealand | 2012 |
 | Stasiak et al. | The Journey | New Zealand | 2014 |
-| Ip et al. | Grapse the Opportunity | Hong Kong, China | 2016 |
+| Ip et al. | Grasp the Opportunity | Hong Kong, China | 2016 |
 | Poppelaars et al. | SPARX | Netherlands | 2016 |
 | Ranney et al. | iDove | USA | 2018 |
-| O'Dea et al. | Weclick | Australia | 2020 |
+| O'Dea et al. | WeClick | Australia | 2020 |
 | Smith et al. | Stressbusters | UK | 2015 |
 | Rohde et al. | Feeling Good | USA | 2015 |
 | Wright et al. | Stressbusters | UK | 2020 |
@@ -216,15 +216,15 @@ This section records methodological and coding issues that are easy to forget wh
 
 ### 1. Mixing endpoint and change-score effect sizes
 
-**Problem:** Two studies contributed change-score SMDs rather than endpoint SMDs: Stallard (2024) and Bohr (2023). Analysing them separately would leave only *k* = 2 change-score studies, making the separate synthesis unstable and any endpoint-versus-change-score subgroup comparison underpowered.The Cochrane Handbook §10.5.2 and Harrer et al. caution that endpoint and change-score estimates may differ when baseline imbalance, regression to the mean, or inconsistent reporting is present.
+**Problem:** Two studies contributed change-score SMDs rather than endpoint SMDs: Stallard (2024) and Fleming (2012). Analysing them separately would leave only *k* = 2 change-score studies, making the separate synthesis unstable and any endpoint-versus-change-score subgroup comparison underpowered. The Cochrane Handbook §10.5.2 and Harrer et al. caution that endpoint and change-score estimates may differ when baseline imbalance, regression to the mean, or inconsistent reporting is present.
 
-**Resolution:** The primary analysis combines endpoint and change-score SMDs. This is justified using Ostinelli et al. (2024, *Research Synthesis Methods*), who analysed individual participant data from 61 iCBT depression trials and found no substantive difference between endpoint-based, change-score-based, and mixed SMD pooling approaches. The Cochrane-level concern should still be acknowledged in the thesis Methods section.
+**Resolution:** The primary analysis combines endpoint-type and change-score SMDs. This is justified using Ostinelli et al. (2024, *Research Synthesis Methods*), who analysed individual participant data from 61 iCBT depression trials and found no substantive difference between endpoint-based, change-score-based, and mixed SMD pooling approaches. The Cochrane-level concern should still be acknowledged in the thesis Methods section.
 
 ### 2. Single-zero dropout events in the acceptability analysis
 
-**Problem.** Some studies reported zero dropout events in one arm, creating single-zero cells in the 2 × 2 dropout table. 
+**Problem.** Some studies reported zero dropout events in one arm, creating single-zero cells in the 2 × 2 dropout table.
 
-In the current dataset, the single-zero studies are Ip (2016), Poppelaars (2016), and Smith (2015). Dropout was not rare across the dataset as a whole, so this was treated as a zero-cell handling issue rather than a classical rare-event problem.
+In the current dataset, the single-zero studies are Fleming (2012), Ip (2016), Poppelaars (2016), and Smith (2015). Dropout was not rare across the dataset as a whole, so this was treated as a zero-cell handling issue rather than a classical rare-event problem.
 
 **Resolution.** The primary acceptability analysis uses `meta::metabin()` with risk ratios, Mantel-Haenszel estimation, and `MH.exact = TRUE`. The random-effects estimate is reported with REML and Hartung-Knapp adjustment.
 
@@ -234,6 +234,8 @@ Two sensitivity analyses are used to check whether the result depends on zero-ce
 2. re-running the model with inverse-variance pooling and the Cochrane-style continuity correction (`RR.Cochrane = TRUE`).
 
 An additional exploratory analysis uses Viechtbauer-Cheung influence diagnostics and a Baujat plot to examine whether any individual study contributes disproportionately to heterogeneity or to the pooled estimate. In the current run, O'Dea (2025) is examined separately as the influence-flagged study.
+
+> **Note on the acceptability sample.** The acceptability dataset (`acceptability_dropout_post_data.csv`) is not identical to the main-analysis set. It includes Bohr et al. (2023) and excludes Stasiak et al. (2014). Confirm this composition is intended and state it explicitly in the thesis Methods, since the *k* will not match the main analysis.
 
 ### 3. Cross-sheet joins return zero rows
 
@@ -260,7 +262,17 @@ post_data <- effect_data %>%
 stopifnot(nrow(post_data) == 14)
 ```
 
-This makes the script stop immediately if the join fails, instead of allowing an empty dataset to flow into later analyses.
-The stopifnot turns a silent wrong-answer bug into an immediate, interpretable error.
+This makes the script stop immediately if the join fails, instead of allowing an empty dataset to flow into later analyses. The `stopifnot` turns a silent wrong-answer bug into an immediate, interpretable error.
 
 ---
+
+## References
+
+> The entries below cover the methodological and framework sources cited in this README. Verify exact volume, issue, page numbers, and DOIs in NoteExpress before finalising; the Ostinelli et al. (2024) entry still needs its full title and pagination.
+
+- Harrer, M., Cuijpers, P., Furukawa, T. A., & Ebert, D. D. (2021). *Doing meta-analysis with R: A hands-on guide*. Chapman & Hall/CRC.
+- Higgins, J. P. T., Thomas, J., Chandler, J., Cumpston, M., Li, T., Page, M. J., & Welch, V. A. (Eds.). (2023). *Cochrane handbook for systematic reviews of interventions* (Version 6.4). Cochrane.
+- Ostinelli, E. G., et al. (2024). [Title to be completed]. *Research Synthesis Methods*. [volume/pages/DOI to be completed]
+- Page, M. J., McKenzie, J. E., Bossuyt, P. M., Boutron, I., Hoffmann, T. C., Mulrow, C. D., … Moher, D. (2021). The PRISMA 2020 statement: An updated guideline for reporting systematic reviews. *BMJ, 372*, n71.
+- Pustejovsky, J. E., & Rodgers, M. A. (2019). Testing for funnel plot asymmetry of standardized mean differences. *Research Synthesis Methods, 10*(1), 57–71.
+- Sterne, J. A. C., Savović, J., Page, M. J., Elbers, R. G., Blencowe, N. S., Boutron, I., … Higgins, J. P. T. (2019). RoB 2: A revised tool for assessing risk of bias in randomised trials. *BMJ, 366*, l4898.
