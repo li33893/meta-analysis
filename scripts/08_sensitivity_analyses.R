@@ -24,11 +24,12 @@ pooled_lower <- model_post$lower.random
 pooled_upper <- model_post$upper.random
 
 # create an outlier table and detect the outliers and put them in
+# 因为回答的问题是“影响诊断”，所以loo常常不会考虑PI
 outlier_table <- tibble::tibble(
   study    = model_post$studlab,
   g        = round(model_post$TE, 3),
-  ci_lower = round(model_post$lower, 3),
-  ci_upper = round(model_post$upper, 3)
+  ci_lower = round(model_post$lower, 2),
+  ci_upper = round(model_post$upper, 2)
 ) %>%
   dplyr::mutate(
     outlier_upper_out = ci_upper < pooled_lower,
@@ -51,8 +52,8 @@ loo <- metainf(model_post, pooled = "random")
 loo_table <- tibble::tibble(
   omitted_study = loo$studlab,
   g             = round(loo$TE, 3),
-  ci_lower      = round(loo$lower, 3),
-  ci_upper      = round(loo$upper, 3) 
+  ci_lower      = round(loo$lower, 2),
+  ci_upper      = round(loo$upper, 2) 
 )
 loo_table <- loo_table[order(loo_table$g), ]
 
@@ -82,17 +83,16 @@ to_table <- function(model, label){
     analysis    = label,
     k           = model$k,
     g           = round(model$TE.random, 3),
-    ci_lower    = round(model$lower.random, 3),
-    ci_upper    = round(model$upper.random, 3),
-    I2          = round(model$I2, 3)
+    ci_lower    = round(model$lower.random, 2),
+    ci_upper    = round(model$upper.random, 2),
+    pi_lower = round(model$lower.predict, 2),
+    pi_upper = round(model$upper.predict, 2),
+    I2          = round(model$I2, 0)
   )
 }
 
 
-# build post_data: main-analysis subset (14, Bohr excluded) joined with the
-# classification columns needed for filtering.
-# NOTE: study_info$study_id is named `c` after janitor::clean_names().
-#       If rob_data's id column is not `c`, change it below to its real name.
+# build post_data: main-analysis subset (14, Bohr excluded) joined with the classification columns needed for filtering.
 post_data <- data_to_be_pooled %>%
   dplyr::inner_join(
     study_info %>%
@@ -123,41 +123,32 @@ summary(m_endpoint)
 
 
 ### 5. Bohr cluster inclusion with assumed ICC values ###
-# Bohr 2023 was excluded from the main analysis (study_id = 3): it is a
-# community-level cluster RCT and did not report an ICC. Here it is added back
-# under several assumed ICC values to test whether the pooled effect is robust
-# to plausible cluster-adjustment assumptions.
-# te stays the same; only se_te is inflated by the design effect:
-#   design effect = 1 + (m_bar - 1) * ICC ,  se_corrected = se_te * sqrt(deff)
 
 run_bohr_icc_sens <- function(icc_value) {
   
-  # Bohr's effect-size row, taken from the full effect_data (which still contains it)
   bohr_row <- effect_data %>%
     dplyr::filter(author == "Bohr 2023", timepoint == "post")
   
-  # Average cluster size: 11 communities, analysed N = 13 + 19 ≈ small (~3 per community)
   m_bar <- 3
   deff  <- 1 + (m_bar - 1) * icc_value
   
-  # Inflate SE only, not the effect size
   bohr_corrected <- bohr_row %>%
     dplyr::mutate(se_te = se_te * sqrt(deff))
   
-  # Add corrected Bohr back to the 14 main-analysis studies, then re-pool
   sens_data <- dplyr::bind_rows(data_to_be_pooled, bohr_corrected)
   model     <- run_sens(sens_data)
   
-  # Return one summary row per ICC value
-  bohr_icc_sens_table <-tibble::tibble(
-    sensitivity = paste0("Bohr included, assumed ICC = ", icc_value),
-    k           = model$k,
-    g           = round(model$TE.random, 3),
-    ci_lower    = round(model$lower.random, 3),
-    ci_upper    = round(model$upper.random, 3),
-    I2          = round(model$I2, 3)
-  )
+  # return one row, same column structure as to_table()
+  to_table(model, paste0("Bohr included, assumed ICC = ", icc_value))
 }
+
+# 实际运行：跑一组 ICC，叠成表
+bohr_icc_sens_table <- dplyr::bind_rows(
+  run_bohr_icc_sens(0.01),
+  run_bohr_icc_sens(0.03),
+  run_bohr_icc_sens(0.05),
+  run_bohr_icc_sens(0.10)
+)
 
 
 ### 6. Summary table of all whole-pool sensitivity analyses ###
