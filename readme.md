@@ -55,7 +55,7 @@ How acceptable are unguided self-help CBT interventions?
 | Subgroup analyses | Six analyses: control type, baseline severity, human contact, relaxation, problem-solving, homework; all using `tau.common = TRUE`, REML, and Hartung-Knapp adjustment |
 | Meta-regression | Pre-specified: number of CBT components (`component_count`); post-hoc: publication year centred at 2010 and sample size |
 | Publication bias | Contour-enhanced funnel plot; Egger's test retained for transparency; Pustejovsky and Rodgers' (2019) SMD-corrected test as the primary asymmetry test; trim-and-fill; 3PSM excluded because *k* < 20 |
-| Acceptability | Differential dropout analysed via `meta::metabin()` using Mantel-Haenszel estimation with `MH.exact = TRUE`; random-effects results with REML and Hartung-Knapp adjustment reported alongside fixed-effect results |
+| Acceptability | Differential dropout analysed via meta::metabin() (risk ratio). Primary estimate is the random-effects RR (inverse-variance pooling, REML, Hartung-Knapp), consistent with the main analysis; the Mantel-Haenszel common-effect estimate (MH.exact = TRUE) is reported alongside it |
 | Risk of bias | Cochrane RoB 2.0, visualised with `robvis` |
 | Software | R packages: `meta`, `metafor`, `robvis`, `dplyr`, `ggplot2`, `readxl`, `writexl`, `readr`, `janitor`, `tibble` |
 
@@ -69,7 +69,7 @@ How acceptable are unguided self-help CBT interventions?
 
 **Baseline severity:** Studies not meeting a validated clinical cutoff at baseline are flagged for sensitivity analysis rather than excluded outright.
 
-**Acceptability:** Three studies have single-arm zero dropout events: Ip (2016), Poppelaars (2016), and Smith (2015). The primary acceptability analysis uses `meta::metabin()` with Mantel-Haenszel estimation and `MH.exact = TRUE`, allowing single-zero studies to be retained without applying an arbitrary continuity correction. A sensitivity analysis excluding these three studies is conducted to assess robustness.
+**Acceptability:** Three studies have single-arm zero dropout events: Ip (2016), Poppelaars (2016), and Smith (2015). The primary acceptability estimate is the random-effects risk ratio (inverse-variance pooling, REML between-study variance, Hartung-Knapp adjustment), consistent with the main SMD analysis. The Mantel-Haenszel common-effect estimate (method = "MH", MH.exact = TRUE) is reported alongside it. MH.exact = TRUE avoids a continuity correction in the Mantel-Haenszel common-effect row; the inverse-variance random-effects estimate still applies the default 0.5 correction to the single-zero studies, which is why excluding them and re-running with an alternative correction (RR.Cochrane = TRUE) are reported as sensitivity analyses.
 
 **Publication bias:** Pustejovsky and Rodgers' (2019) SMD-corrected test is treated as the primary funnel-asymmetry test because standard Egger's test can produce an artifactual association between SMDs and their standard errors. Egger's test is retained for transparency. The three-parameter selection model is not applied because *k* is below the recommended threshold of 20.
 
@@ -89,12 +89,12 @@ How acceptable are unguided self-help CBT interventions?
 
 ## Included Study Records
 
-The table below lists the study records currently documented in the review dataset. The main post-intervention model uses the subset available in `post_data.csv` (*k* = 14; Bohr et al., 2023 is excluded, see note below).
+The table below lists the study records currently documented in the review dataset. The main post-intervention model uses the subset available in `post_data.csv`.
 
 | Study | Program | Country | Year |
 |---|---|---|---|
 | Ackerson et al. | Feeling Good | USA | 1998 |
-| Bohr et al. | SPARX | Canada | 2023 |
+| Bohr et al. | SPARX | Cananda | 2023 |
 | Fleming et al. | SPARX | New Zealand | 2012 |
 | Stice et al. | Feeling Good | USA | 2008 |
 | Makarushka | Blueblaster | UK | 2011 |
@@ -102,7 +102,7 @@ The table below lists the study records currently documented in the review datas
 | Ip et al. | Grasp the Opportunity | Hong Kong, China | 2016 |
 | Poppelaars et al. | SPARX | Netherlands | 2016 |
 | Ranney et al. | iDove | USA | 2018 |
-| O'Dea et al. | WeClick | Australia | 2020 |
+| O'Dea et al. | Weclick | Australia | 2020 |
 | Smith et al. | Stressbusters | UK | 2015 |
 | Rohde et al. | Feeling Good | USA | 2015 |
 | Wright et al. | Stressbusters | UK | 2020 |
@@ -216,24 +216,21 @@ This section records methodological and coding issues that are easy to forget wh
 
 ### 1. Mixing endpoint and change-score effect sizes
 
-**Problem:** Two studies contributed change-score SMDs rather than endpoint SMDs: Stallard (2024) and Fleming (2012). Analysing them separately would leave only *k* = 2 change-score studies, making the separate synthesis unstable and any endpoint-versus-change-score subgroup comparison underpowered. The Cochrane Handbook §10.5.2 and Harrer et al. caution that endpoint and change-score estimates may differ when baseline imbalance, regression to the mean, or inconsistent reporting is present.
+**Problem:** Two studies contributed change-score SMDs rather than endpoint SMDs: Stallard (2024) and Fleming (2012). Analysing them separately would leave only *k* = 2 change-score studies, making the separate synthesis unstable and any endpoint-versus-change-score subgroup comparison underpowered.The Cochrane Handbook §10.5.2 and Harrer et al. caution that endpoint and change-score estimates may differ when baseline imbalance, regression to the mean, or inconsistent reporting is present.
 
-**Resolution:** The primary analysis combines endpoint-type and change-score SMDs. This is justified using Ostinelli et al. (2024, *Research Synthesis Methods*), who analysed individual participant data from 61 iCBT depression trials and found no substantive difference between endpoint-based, change-score-based, and mixed SMD pooling approaches. The Cochrane-level concern should still be acknowledged in the thesis Methods section.
+**Resolution:** The primary analysis combines endpoint and change-score SMDs. This is justified using Ostinelli et al. (2024, *Research Synthesis Methods*), who analysed individual participant data from 61 iCBT depression trials and found no substantive difference between endpoint-based, change-score-based, and mixed SMD pooling approaches. The Cochrane-level concern should still be acknowledged in the thesis Methods section.
 
 ### 2. Single-zero dropout events in the acceptability analysis
 
-**Problem.** Some studies reported zero dropout events in one arm, creating single-zero cells in the 2 × 2 dropout table.
+**The zeros, and what they mean.** Three studies (Ip, 2016; Poppelaars, 2016; Smith, 2015) reported zero dropout in one arm. Before reading anything into these zeros, one alternative had to be excluded: that dropout is simply a rare outcome, which would make the zeros uninformative. It is not rare. Across the dataset dropout ranged from near zero to over 80%, and an outcome that reaches 80% in some trials cannot be intrinsically rare. If it were, the zeros would sit in the smallest studies while the large trials showed only low single-digit counts; instead they come from studies that were neither small nor single-session. This argument rests on the spread of absolute dropout rates alone. It does not rely on the heterogeneity of the pooled estimate, which is a separate matter addressed below.
 
-In the current dataset, the single-zero studies are Ip (2016), Poppelaars (2016), and Smith (2015). Dropout was not rare across the dataset as a whole, so this was treated as a zero-cell handling issue rather than a classical rare-event problem.
+Once rare events are ruled out, the zeros carry the substantive signal that matters here. In all three studies dropout was low in both arms, single-digit on each side, and the zero is just the low end of that pattern rather than a feature of one arm; it also falls in different arms across the three (the intervention arm in Smith, the control arm in Ip and Poppelaars), so there is no consistent between-arm story. What they share is retention at the study level. Because acceptability is the question of whether participants stay in these interventions, explaining how a few trials kept dropout this low is part of the finding, not a nuisance to be corrected away.
 
-**Resolution.** The primary acceptability analysis uses `meta::metabin()` with risk ratios, Mantel-Haenszel estimation, and `MH.exact = TRUE`. The random-effects estimate is reported with REML and Hartung-Knapp adjustment.
+**Statistical handling of the zero cells.** This is the narrower, technical thread, and it is independent of the heterogeneity question below. The primary estimate is the random-effects risk ratio (inverse-variance pooling, REML, Hartung-Knapp), computed with `meta::metabin()`. The Mantel-Haenszel common-effect estimate is reported alongside it; `MH.exact = TRUE` keeps the single-zero studies in that estimate without an arbitrary continuity correction. Two sensitivity analyses confirm the result does not depend on how the zeros are handled: dropping the single-zero studies, and re-running with inverse-variance pooling and the Cochrane continuity correction (`RR.Cochrane = TRUE`).
 
-Two sensitivity analyses are used to check whether the result depends on zero-cell handling:
+**Heterogeneity, the outlier, and the comparison.** The pooled risk ratio was heterogeneous. This heterogeneity is in the risk ratio, the ratio of dropout risk between arms, and is a different quantity from the spread of absolute dropout rates used above: studies can share a risk ratio while differing widely in absolute dropout, or share low absolute dropout while differing in their risk ratios. A Baujat plot and Viechtbauer-Cheung influence diagnostics locate the inconsistency in a single study, O'Dea (2025): removing it drops I² from 40.5% to 13.6% and leaves τ² near zero, so the remaining studies are mutually consistent. The inconsistency is one outlier against a coherent set, not a systematic pattern, and it concerns the risk ratio only; it does not imply that O'Dea has the most extreme absolute dropout or that removing it narrows the absolute spread.
 
-1. excluding the dynamically identified single-zero studies;
-2. re-running the model with inverse-variance pooling and the Cochrane-style continuity correction (`RR.Cochrane = TRUE`).
-
-An additional exploratory analysis uses Viechtbauer-Cheung influence diagnostics and a Baujat plot to examine whether any individual study contributes disproportionately to heterogeneity or to the pooled estimate. In the current run, O'Dea (2025) is examined separately as the influence-flagged study.
+O'Dea (2025) is therefore not only a statistical outlier but the high-dropout pole for the comparison that answers the acceptability question. It is a recent, large trial closer to autonomous real-world deployment, and its high dropout stands against the low-dropout studies, above all Smith (2015), which retained participants in both arms. What design conditions let dropout be kept this low is the substantive question, treated here as hypothesis-generating and developed in the Discussion, where it connects to the wider pattern of higher engagement under research-supported conditions and lower engagement as deployment becomes more autonomous.
 
 ### 3. Cross-sheet joins return zero rows
 
@@ -260,7 +257,8 @@ post_data <- effect_data %>%
 stopifnot(nrow(post_data) == 14)
 ```
 
-This makes the script stop immediately if the join fails, instead of allowing an empty dataset to flow into later analyses. The `stopifnot` turns a silent wrong-answer bug into an immediate, interpretable error.
+This makes the script stop immediately if the join fails, instead of allowing an empty dataset to flow into later analyses.
+The stopifnot turns a silent wrong-answer bug into an immediate, interpretable error.
 
 ---
 
