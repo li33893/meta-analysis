@@ -87,7 +87,7 @@ to_table <- function(model, label){
     ci_upper    = round(model$upper.random, 2),
     pi_lower = round(model$lower.predict, 2),
     pi_upper = round(model$upper.predict, 2),
-    I2          = round(model$I2, 0)
+    I2          = round(model$I2, 3)
   )
 }
 
