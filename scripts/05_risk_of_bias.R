@@ -13,7 +13,7 @@ data_rob2 <- rob_data %>%
     D3      = d3_missing_data_low_some_high,
     D4      = d4_measurement_low_some_high,
     D5      = d5_selection_of_results_low_some_high,
-    Overall = overall_low_some_high
+    Overall = overall
   ) %>%
   mutate(
     # 去掉 "et al." 及前后逗号空格
