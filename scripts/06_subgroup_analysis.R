@@ -51,12 +51,27 @@ data_sub <- post_data %>%
                              labels = c("No", "Yes")),
     
     ### 3-4. components ###
-    has_rx = sapply(stringr::str_split(cbt_components, "\\+"), 
-                    function(x) "rx" %in% x),
-    has_ps = sapply(stringr::str_split(cbt_components, "\\+"), 
-                    function(x) "ps" %in% x),
-    has_hw = sapply(stringr::str_split(cbt_components, "\\+"), 
-                    function(x) "hw" %in% x)
+    ### 用 Present/Absent 显式 factor，Present 在前，固定亚组顺序 ###
+    has_rx = factor(
+      ifelse(sapply(stringr::str_split(cbt_components, "\\+"),
+                    function(x) "rx" %in% x), "Present", "Absent"),
+      levels = c("Present", "Absent")),
+    has_ps = factor(
+      ifelse(sapply(stringr::str_split(cbt_components, "\\+"),
+                    function(x) "ps" %in% x), "Present", "Absent"),
+      levels = c("Present", "Absent")),
+    has_hw = factor(
+      ifelse(sapply(stringr::str_split(cbt_components, "\\+"),
+                    function(x) "hw" %in% x), "Present", "Absent"),
+      levels = c("Present", "Absent")),
+    has_rp = factor(
+      ifelse(sapply(stringr::str_split(cbt_components, "\\+"),
+                    function(x) "rp" %in% x), "Present", "Absent"),
+      levels = c("Present", "Absent")),
+    has_ist = factor(
+      ifelse(sapply(stringr::str_split(cbt_components, "\\+"),
+                    function(x) "ist" %in% x), "Present", "Absent"),
+      levels = c("Present", "Absent"))
   )
 
 
@@ -101,6 +116,8 @@ sg_human    <- update(model_sub, subgroup = human_contact_f, tau.common = TRUE)
 sg_rx       <- update(model_sub, subgroup = has_rx,          tau.common = TRUE)
 sg_ps       <- update(model_sub, subgroup = has_ps,          tau.common = TRUE)
 sg_hw       <- update(model_sub, subgroup = has_hw,          tau.common = TRUE)
+sg_rp       <- update(model_sub, subgroup = has_rp,          tau.common = TRUE)
+sg_ist      <- update(model_sub, subgroup = has_ist,         tau.common = TRUE)
 
 
 ### 6. Save files ###
@@ -113,6 +130,8 @@ saveRDS(sg_human,    file.path(results_dir, "models", "sg_human.rds"))
 saveRDS(sg_rx,       file.path(results_dir, "models", "sg_rx.rds"))
 saveRDS(sg_ps,       file.path(results_dir, "models", "sg_ps.rds"))
 saveRDS(sg_hw,       file.path(results_dir, "models", "sg_hw.rds"))
+saveRDS(sg_rp,       file.path(results_dir, "models", "sg_rp.rds"))
+saveRDS(sg_ist,      file.path(results_dir, "models", "sg_ist.rds"))
 
 extract_sg <- function(sg, var_name) {
   tibble::tibble(
@@ -136,7 +155,9 @@ subgroup_summary <- dplyr::bind_rows(
   extract_sg(sg_human,    "Human contact"),
   extract_sg(sg_rx,       "Relaxation"),
   extract_sg(sg_ps,       "Problem-solving"),
-  extract_sg(sg_hw,       "Homework")
+  extract_sg(sg_hw,       "Homework"),
+  extract_sg(sg_rp,       "Relapse prevention"),
+  extract_sg(sg_ist,      "Interpersonal skills training")
 )
 
 readr::write_csv(subgroup_summary, 
@@ -170,7 +191,9 @@ subgroup_raw <- dplyr::bind_rows(
   extract_sg_full(sg_human,    "Human contact",      "Exploratory"),
   extract_sg_full(sg_rx,       "Relaxation",         "Exploratory"),
   extract_sg_full(sg_ps,       "Problem-solving",    "Exploratory"),
-  extract_sg_full(sg_hw,       "Homework",           "Exploratory")
+  extract_sg_full(sg_hw,       "Homework",           "Exploratory"),
+  extract_sg_full(sg_rp,       "Relapse prevention",  "Exploratory"),
+  extract_sg_full(sg_ist,      "Interpersonal skills training",    "Exploratory")
 )
 
 # 帮助函数：格式化 p 值（< .001 不写数字，否则 3 位小数无前导零）
@@ -234,3 +257,8 @@ print(knitr::kable(subgroup_fmt, format = "pipe", align = "lllrrlrll"))
 summary(sg_hw)
 summary(sg_rx)
 summary(sg_ps)
+summary(sg_rp)
+summary(sg_ist)
+
+summary(sg_severity)
+summary(sg_human)

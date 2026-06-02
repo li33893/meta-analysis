@@ -29,6 +29,55 @@ accept_data <- effect_data %>%
 
 cat("Acceptability dataset prepared: k =", nrow(accept_data), "\n")
 
+### TEMP (console only): dropout rate + human_contact subgroup ###
+### Run after Section 2 (accept_data built) ###
+
+## (a) Attach human_contact (accept_data lacks it) + per-arm dropout rates
+accept_hc <- accept_data %>%
+  dplyr::inner_join(
+    study_info %>% dplyr::select(study_id = c, human_contact),
+    by = "study_id"
+  ) %>%
+  dplyr::mutate(
+    human_contact_f = factor(human_contact, levels = c(0, 1),
+                             labels = c("No", "Yes")),
+    rate_exp  = n_dropout_exp  / n_exp,
+    rate_ctrl = n_dropout_ctrl / n_ctrl
+  )
+stopifnot(nrow(accept_hc) == nrow(accept_data))   # = 14 (Bohr included)
+
+## (b) Per-study dropout rate
+accept_hc %>%
+  dplyr::transmute(
+    author, human_contact,
+    n_dropout_exp, n_exp,  rate_exp  = round(rate_exp,  3),
+    n_dropout_ctrl, n_ctrl, rate_ctrl = round(rate_ctrl, 3)
+  ) %>%
+  print(n = Inf)
+
+## (c) Pooled dropout rate by human_contact (events/n summed within group)
+accept_hc %>%
+  dplyr::group_by(human_contact_f) %>%
+  dplyr::summarise(
+    k         = dplyr::n(),
+    rate_exp  = round(sum(n_dropout_exp)  / sum(n_exp),  3),
+    rate_ctrl = round(sum(n_dropout_ctrl) / sum(n_ctrl), 3),
+    .groups = "drop"
+  ) %>%
+  print()
+
+## (d) human_contact subgroup on the RR (MH exact + REML + HK)
+sg_accept_human <- meta::metabin(
+  event.e = n_dropout_exp, n.e = n_exp,
+  event.c = n_dropout_ctrl, n.c = n_ctrl,
+  studlab = author, data = accept_hc,
+  sm = "RR", method = "MH", MH.exact = TRUE,
+  common = FALSE, random = TRUE,
+  method.tau = "REML", method.random.ci = "HK",
+  subgroup = human_contact_f, tau.common = FALSE   # independent tau^2 per group
+)
+summary(sg_accept_human)
+
 
 ### 3. Primary analysis: MH exact + random-effects ####
 ### Common-effect estimate uses exact MH without continuity correction.

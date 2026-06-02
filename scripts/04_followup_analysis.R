@@ -183,7 +183,14 @@ forest(model_fu_long,
 dev.off()
 
 cat("Follow-up forest plots saved to figures/\n")
+
+# Check if O'Dea was the influencial study at short-term (to see if I^2 drops)
+fu_short_noOdea <- fu_short %>% dplyr::filter(study_id != 9)
+m <- meta::metagen(TE=te, seTE=se_te, studlab=author, data=fu_short_noOdea,
+                   sm="SMD", common=FALSE, random=TRUE,
+                   method.tau="REML", method.random.ci="HK")
+summary(m)
                  
                  
-                 
+            
                  

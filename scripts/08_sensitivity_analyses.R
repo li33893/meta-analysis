@@ -110,7 +110,7 @@ stopifnot(nrow(post_data) == 14)   # defensive check: join must still give 14 ro
 m_journal <- run_sens(dplyr::filter(post_data, publication_type == "Journal"))
 m_depprim <- run_sens(dplyr::filter(post_data, depression_role == 1))
 m_lowrob  <- run_sens(dplyr::filter(post_data, overall != "High"))
-
+m_intended_prevention <- run_sens(dplyr::filter(post_data, depression_role == 1))
 
 ### 4. Methodological sensitivity: endpoint-only analysis ###
 
