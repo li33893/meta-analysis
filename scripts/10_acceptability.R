@@ -29,55 +29,6 @@ accept_data <- effect_data %>%
 
 cat("Acceptability dataset prepared: k =", nrow(accept_data), "\n")
 
-### TEMP (console only): dropout rate + human_contact subgroup ###
-### Run after Section 2 (accept_data built) ###
-
-## (a) Attach human_contact (accept_data lacks it) + per-arm dropout rates
-accept_hc <- accept_data %>%
-  dplyr::inner_join(
-    study_info %>% dplyr::select(study_id = c, human_contact),
-    by = "study_id"
-  ) %>%
-  dplyr::mutate(
-    human_contact_f = factor(human_contact, levels = c(0, 1),
-                             labels = c("No", "Yes")),
-    rate_exp  = n_dropout_exp  / n_exp,
-    rate_ctrl = n_dropout_ctrl / n_ctrl
-  )
-stopifnot(nrow(accept_hc) == nrow(accept_data))   # = 14 (Bohr included)
-
-## (b) Per-study dropout rate
-accept_hc %>%
-  dplyr::transmute(
-    author, human_contact,
-    n_dropout_exp, n_exp,  rate_exp  = round(rate_exp,  3),
-    n_dropout_ctrl, n_ctrl, rate_ctrl = round(rate_ctrl, 3)
-  ) %>%
-  print(n = Inf)
-
-## (c) Pooled dropout rate by human_contact (events/n summed within group)
-accept_hc %>%
-  dplyr::group_by(human_contact_f) %>%
-  dplyr::summarise(
-    k         = dplyr::n(),
-    rate_exp  = round(sum(n_dropout_exp)  / sum(n_exp),  3),
-    rate_ctrl = round(sum(n_dropout_ctrl) / sum(n_ctrl), 3),
-    .groups = "drop"
-  ) %>%
-  print()
-
-## (d) human_contact subgroup on the RR (MH exact + REML + HK)
-sg_accept_human <- meta::metabin(
-  event.e = n_dropout_exp, n.e = n_exp,
-  event.c = n_dropout_ctrl, n.c = n_ctrl,
-  studlab = author, data = accept_hc,
-  sm = "RR", method = "MH", MH.exact = TRUE,
-  common = FALSE, random = TRUE,
-  method.tau = "REML", method.random.ci = "HK",
-  subgroup = human_contact_f, tau.common = FALSE   # independent tau^2 per group
-)
-summary(sg_accept_human)
-
 
 ### 3. Primary analysis: MH exact + random-effects ####
 ### Common-effect estimate uses exact MH without continuity correction.
@@ -235,49 +186,49 @@ sensitivity_summary <- tibble::tibble(
     paste0("Primary - MH exact common-effect (k = ",   model_accept_rr$k, ")"),
     paste0("Sensitivity 1 - excluding single-zero (k = ", model_accept_no_sz$k, ")"),
     paste0("Sensitivity 2 - IV + Cochrane CC (k = ",   model_accept_iv_cochrane$k, ")"),
-    paste0("Exploratory - excluding two high-weight studies (k = ", model_accept_no_high$k, ")")
+    paste0("Exploratory - excluding two high-weight studies (k = ", model_accept_no_odea$k, ")")
   ),
   rr = c(
     exp(model_accept_rr$TE.random),
     exp(model_accept_rr$TE.common),
     exp(model_accept_no_sz$TE.random),
     exp(model_accept_iv_cochrane$TE.random),
-    exp(model_accept_no_high$TE.random)
+    exp(model_accept_no_odea$TE.random)
   ),
   ci_lower = c(
     exp(model_accept_rr$lower.random),
     exp(model_accept_rr$lower.common),
     exp(model_accept_no_sz$lower.random),
     exp(model_accept_iv_cochrane$lower.random),
-    exp(model_accept_no_high$lower.random)
+    exp(model_accept_no_odea$lower.random)
   ),
   ci_upper = c(
     exp(model_accept_rr$upper.random),
     exp(model_accept_rr$upper.common),
     exp(model_accept_no_sz$upper.random),
     exp(model_accept_iv_cochrane$upper.random),
-    exp(model_accept_no_high$upper.random)
+    exp(model_accept_no_odea$upper.random)
   ),
   p_value = c(
     model_accept_rr$pval.random,
     model_accept_rr$pval.common,
     model_accept_no_sz$pval.random,
     model_accept_iv_cochrane$pval.random,
-    model_accept_no_high$pval.random
+    model_accept_no_odea$pval.random
   ),
   i2_pct = c(
     model_accept_rr$I2 * 100,
     NA_real_,
     model_accept_no_sz$I2 * 100,
     model_accept_iv_cochrane$I2 * 100,
-    model_accept_no_high$I2 * 100
+    model_accept_no_odea$I2 * 100
   ),
   tau2 = c(
     model_accept_rr$tau2,
     NA_real_,
     model_accept_no_sz$tau2,
     model_accept_iv_cochrane$tau2,
-    model_accept_no_high$tau2
+    model_accept_no_odea$tau2
   )
 )
 print(sensitivity_summary)
@@ -288,7 +239,7 @@ print(sensitivity_summary)
 saveRDS(model_accept_rr,          file.path(results_dir, "models", "model_accept_rr.rds"))
 saveRDS(model_accept_no_sz,       file.path(results_dir, "models", "model_accept_no_sz.rds"))
 saveRDS(model_accept_iv_cochrane, file.path(results_dir, "models", "model_accept_iv_cochrane.rds"))
-saveRDS(model_accept_no_high,     file.path(results_dir, "models", "model_accept_no_high.rds"))
+saveRDS(model_accept_no_odea,     file.path(results_dir, "models", "model_accept_no_odea.rds"))
 saveRDS(accept_rma,               file.path(results_dir, "models", "accept_rma.rds"))
 saveRDS(inf_result,               file.path(results_dir, "models", "accept_influence.rds"))
 
